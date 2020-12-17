@@ -4,9 +4,10 @@ package ksess
 import (
 	"fmt"
 	"io"
+
 	//"io/ioutil"
 	"html/template"
-	"kot_common/kutils"
+	"mak_common/kutils"
 	"net/http"
 	"os"
 	"path/filepath"

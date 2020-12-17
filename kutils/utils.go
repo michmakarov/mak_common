@@ -13,7 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"kot_common/kerr"
+	"mak_common/kerr"
 	"strings"
 
 	"gopkg.in/gomail.v2"

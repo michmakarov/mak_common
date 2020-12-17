@@ -13,7 +13,7 @@ import (
 
 	//"regexp"
 
-	"kot_common/kerr"
+	"mak_common/kerr"
 	//"kot_common/kutils"
 
 	"github.com/gorilla/securecookie"
@@ -320,8 +320,8 @@ func restoreSessionUsers() (err error) {
 			kerr.SysErrPrintf("restoreSessionUsers:json.Unmarshal(%v) err=%v", userFileName, err.Error())
 			continue
 		} else {
-			cln.hub=hub
-			cln.send=make(chan []byte, )
+			cln.hub = hub
+			cln.send = make(chan []byte)
 			hub.registerSess(&cln)
 			//SendToGenLog("restoreSessionUsers", cln.String("; "))
 		}
@@ -386,7 +386,6 @@ func saveSharedData(sd sharedData) (err error) {
 	}
 	return
 }
-
 
 func updateSharedData() (err error) {
 	var fName = fmt.Sprintf("sessions%vsharedData.json", string(os.PathSeparator))

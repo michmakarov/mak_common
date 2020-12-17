@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"kot_common/kerr"
+	"mak_common/kerr"
 	"strconv"
 
 	"github.com/gorilla/securecookie"

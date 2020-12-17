@@ -13,8 +13,8 @@ import (
 
 	//"golang.org/x/net/context"
 
-	"kot_common/kerr"
-	"kot_common/kutils"
+	"mak_common/kerr"
+	"mak_common/kutils"
 
 	"github.com/gorilla/mux"
 )

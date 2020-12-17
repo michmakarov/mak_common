@@ -3,7 +3,7 @@ package ksess
 
 import (
 	"fmt"
-	"kot_common/kerr"
+	"mak_common/kerr"
 	"os"
 	"time"
 )

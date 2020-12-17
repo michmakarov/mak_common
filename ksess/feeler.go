@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"kot_common/kerr"
-	"kot_common/khttputils"
+	"mak_common/kerr"
+	"mak_common/khttputils"
 
 	"context"
 	//"encoding/json" //see History 201203 06:46

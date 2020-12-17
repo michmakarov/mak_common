@@ -16,9 +16,9 @@ import (
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
 
-	"kot_common/kerr"
-	"kot_common/khttputils"
-	"kot_common/kutils"
+	"mak_common/kerr"
+	"mak_common/khttputils"
+	"mak_common/kutils"
 )
 
 const (

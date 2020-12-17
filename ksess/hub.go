@@ -24,8 +24,8 @@ import (
 
 	"context"
 
-	"kot_common/kerr"
-	"kot_common/kutils"
+	"mak_common/kerr"
+	"mak_common/kutils"
 
 	//"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"

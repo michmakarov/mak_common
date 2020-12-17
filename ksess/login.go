@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	//"html/template"
-	"kot_common/kerr"
-	"kot_common/kutils"
+	"mak_common/kerr"
+	"mak_common/kutils"
 
 	//"math/rand"
 	"net/http"
