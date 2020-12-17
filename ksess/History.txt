@@ -1,0 +1,15 @@
+201203 06:46
+Agent. The conception must be revisioned. So it is needed to remove maintain of it.
+_______201203 07:30 UserLogging: it is obvious that it must be being done into file and without any conditions.
+_______201203 14:45 It is not good that that log files not be placed into an arbitrary place.
+_______201203 15:36 Writing to file is a async operation or not? In other words: Is any sense to write into log in a distinct goloutine as it is with the feeler log. I am talking about a user log: let it be while the simplest.
++++++++++++++++++++++++++++++++
+201209 08:32 Overworking of loginpost function
+_______13:39 doHijackedRequest(w, r, cookData, c)  - should or not the func enter into an annalise of cookData.UserID?
+_______14:16 I am going to overworking func logout(w http.ResponseWriter, r *http.Request, cookData sessCookieData, cln *sessClient) as loginpost function 
+_______14:43 Now doHijackedRequest
+_______16:38 index page (index.html)
+Goal: it should be a SPA for, at least, the login and the logout.
+
+
+

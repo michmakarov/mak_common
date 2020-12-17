@@ -1,0 +1,27 @@
+{{define "login"}}
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <title>com180417</title>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        
+		<!--
+        <link rel="icon" href="/app/img/favicon.ico" type="image/x-icon" >
+        <link rel="shortcut icon" href="/app/img/favicon.ico" type="image/x-icon" >
+        
+        <script type="text/javascript" charset="utf-8" src="app/js/jquery.min.js"></script>
+        -->
+    </head>
+    <body>
+		<img src="/app/img/favicon.ico" alt="/app/img/favicon.ico" height="100" width="100">
+		<p>{{.Error}}</p>
+		<form action="/login" method="POST">
+			user(login name):<input type="text" name="user" value="Mickey"><br>
+			password:<input type="text" name="pass" value="MickeyPass"><br>
+			<input type="submit" value="Submit">
+		</form> 
+		
+    </body>
+</html>
+
+{{end}}

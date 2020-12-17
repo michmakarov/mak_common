@@ -1,0 +1,653 @@
+// sql
+
+package ksess
+
+import (
+	"database/sql"
+	"fmt"
+	"kot_common/kerr"
+	"net/url"
+	"time"
+
+	//"kot_common/kutils"
+	"strconv"
+	"strings"
+	//"time"
+)
+
+type TxLogRecord struct {
+	ConnString string
+	Opened     string //Date in format "20060102_150405"
+	Dur        string //millisecond
+	Proc       string //The tag that represent procedure that have opened the transaction
+	Action     string //The tag that represent an incoming request (HTTP or WS) that spawned this record
+	ReqNum     string //The requst number provided by feeler
+	UserId     string //Identifier of user from which name the transaction was opened
+	Commited   string // two values: "yes" or "no"
+}
+
+//InsertTxLogRecord inserts a record of transaction that have been successfully commited or rollbacked
+func InsertTxLogRecord(tlr *TxLogRecord) (err error) {
+	if sessCP.NotUserLogging {
+		err = fmt.Errorf("sessCP.NotUserLogging is true")
+		return
+	}
+	if usersLog == nil {
+		err = fmt.Errorf("There is not log DB")
+		return
+	}
+	tx, err := usersLog.Begin()
+	if err != nil {
+		kerr.SysErrPrintf("InsertTxLogRecord; usersLog.Begin() error=%s", err.Error())
+		return
+	}
+	//fmt.Printf("ksess.insertUserLogRecord user_id=%v, tag=%v, tp=%v, recId=%v\n", ulr.user_id, ulr.tag, ulr.tp, ulr.recId)
+	_, err = tx.Exec("INSERT INTO txLog VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+		tlr.ConnString, tlr.Opened, tlr.Dur, tlr.Proc, tlr.Action, tlr.ReqNum, tlr.UserId, tlr.Commited)
+	if err != nil {
+		tx.Rollback()
+		kerr.SysErrPrintf("InsertTxLogRecord: tx.Exec  error=%s", err.Error())
+		return
+	}
+	tx.Commit()
+	return
+}
+
+func insertUserLogRecord(ulr *userLogRecord) {
+	if sessCP.NotUserLogging {
+		return
+	}
+	if usersLog == nil {
+		return
+	}
+	tx, err := usersLog.Begin()
+	if err != nil {
+		kerr.SysErrPrintf("insertUserLogRecord; usersLog.Begin() error=%s", err.Error())
+		return
+	}
+	//fmt.Printf("ksess.insertUserLogRecord user_id=%v, tag=%v, tp=%v, recId=%v\n", ulr.user_id, ulr.tag, ulr.tp, ulr.recId)
+	ulr.url, _ = url.PathUnescape(ulr.url)
+	_, err = tx.Exec("INSERT INTO actionLog VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		ulr.user_id, ulr.tag, ulr.tp, ulr.url, ulr.start, 0, 0, 0, 0, ulr.recId)
+	if err != nil {
+		tx.Rollback()
+		kerr.SysErrPrintf("insertUserLogRecord; tx.Exec  error=%s", err.Error())
+		return
+	}
+	tx.Commit()
+
+}
+
+func updateUserLogRecord(dur, byte_in, byte_out int64, done int, recId string) {
+	if sessCP.NotUserLogging {
+		return
+	}
+	if usersLog == nil {
+		return
+	}
+	query := `
+UPDATE actionLog
+SET dur = ?, bytes_in = ?, bytes_out =?, done = ? WHERE id=?`
+	tx, err := usersLog.Begin()
+	if err != nil {
+		kerr.SysErrPrintf("updateUserLogRecord; usersLog.Begin() error=%s", err.Error())
+		return
+	}
+	_, err = tx.Exec(query, dur, byte_in, byte_out, done, recId)
+	if err != nil {
+		tx.Rollback()
+		kerr.SysErrPrintf("updateUserLogRecord; tx.Exec  error=%s", err.Error())
+		return
+	}
+	tx.Commit()
+}
+
+func updateUserLogRecordWs(url string, dur, byte_in, byte_out int64, done int, recId string) {
+	if sessCP.NotUserLogging {
+		return
+	}
+	if usersLog == nil {
+		return
+	}
+	query := `
+UPDATE actionLog
+SET url=?, dur = ?, bytes_in = ?, bytes_out =?, done = ? WHERE id=?`
+	tx, err := usersLog.Begin()
+	if err != nil {
+		kerr.SysErrPrintf("updateUserLogRecord; usersLog.Begin() error=%s", err.Error())
+		return
+	}
+	_, err = tx.Exec(query, url, dur, byte_in, byte_out, done, recId)
+	if err != nil {
+		tx.Rollback()
+		kerr.SysErrPrintf("updateUserLogRecordWs; tx.Exec  error=%s", err.Error())
+		return
+	}
+	tx.Commit()
+}
+
+//190401 Why is it (clearUserLog) taken not string? And why "clear" but not "clean".
+//So let's "CleanUserLog" and "CleanTxlog" be.
+/*
+func clearUserLog(since time.Time) {
+	var (
+		snc string
+	)
+	if sessCP.NotUserLogging {
+		return
+	}
+	if usersLog == nil {
+		return
+	}
+	snc = since.Format(startFormat)
+	tx, err := usersLog.Begin()
+	if err != nil {
+		kerr.SysErrPrintf("clearUserLog: usersLog.Begin() error=%s", err.Error())
+		return
+	}
+
+	if since.IsZero() {
+		_, err = tx.Exec("DELETE FROM actionLog")
+	} else {
+		_, err = tx.Exec("DELETE FROM actionLog WHERE start<?", snc)
+	}
+	if err != nil {
+		tx.Rollback()
+		kerr.SysErrPrintf("clearUserLog: tx.Exec  error=%s", err.Error())
+		return
+	}
+	tx.Commit()
+
+}
+*/
+
+//The functions with the prefix "Clean_" delete records from corressponding log tables.
+//if a parameter (since) is empty the tables will be cleaned entirely
+//It does since = strings.TrimSpace(since)
+//If since!="" they will delete all records where the parameter value < the value of the field "Start." That is the result is not predictable in common sense.
+func CleanUserLog(since string) (err error) {
+	if sessCP.NotUserLogging {
+		err = fmt.Errorf("ksess.CleanUserLog: sessCP.NotUserLogging is true")
+		return
+	}
+	if usersLog == nil {
+		err = fmt.Errorf("ksess.CleanUserLog: usersLog == nil")
+		return
+	}
+	tx, err := usersLog.Begin()
+	if err != nil {
+		err = fmt.Errorf("ksess.CleanUserLog: usersLog.Begin err=%v", err.Error())
+		return
+	}
+	since = strings.TrimSpace(since)
+	if since == "" {
+		_, err = tx.Exec("DELETE FROM actionLog")
+	} else {
+		_, err = tx.Exec("DELETE FROM actionLog WHERE start<\"?\"", since)
+	}
+	if err != nil {
+		if err1 := tx.Rollback(); err1 != nil {
+			err = fmt.Errorf("ksess.cleanUserLog: tx.Rollback err=%v", err1.Error())
+			return
+		}
+		err = fmt.Errorf("ksess.CleanUserLog: tx.Exec err=%v", err.Error())
+		return
+	}
+	if err = tx.Commit(); err != nil {
+		err = fmt.Errorf("ksess.CleanUserLog: tx.Commit err=%v", err.Error())
+		return
+	}
+	return
+}
+func CleanTxLog(since string) (err error) {
+	if sessCP.NotUserLogging {
+		err = fmt.Errorf("ksess.CleanTxLog: sessCP.NotUserLogging is true")
+		return
+	}
+	if usersLog == nil {
+		err = fmt.Errorf("ksess.CleanTxLog: usersLog == nil")
+		return
+	}
+	tx, err := usersLog.Begin()
+	if err != nil {
+		err = fmt.Errorf("ksess.CleanTxLog: usersLog.Begin err=%v", err.Error())
+		return
+	}
+	since = strings.TrimSpace(since)
+	if since == "" {
+		_, err = tx.Exec("DELETE FROM txLog")
+	} else {
+		_, err = tx.Exec("DELETE FROM txLog WHERE opened<\"?\"", since)
+	}
+	if err != nil {
+		if err1 := tx.Rollback(); err1 != nil {
+			err = fmt.Errorf("ksess.TxUserLog: Rollback err=%v", err1.Error())
+			return
+		}
+		err = fmt.Errorf("ksess.CleanTxLog: Exec err=%v", err.Error())
+		return
+	}
+	if err = tx.Commit(); err != nil {
+		err = fmt.Errorf("ksess.CleanTxLog:Commit err=%v", err.Error())
+		return
+	}
+	return
+}
+
+//190401 Why does not it (selectUserLog) return err? What was a twist of thought taken place?
+//I do not remember; therefore the selectUserLog2 be let be.
+func selectUserLog(selelctClause string) *sql.Rows {
+	var (
+		rows *sql.Rows
+		err  error
+	)
+	if sessCP.NotUserLogging {
+		return nil
+	}
+	//if usersLog == nil {
+	//	return nil
+	//}
+	//tx, err := usersLog.Begin()
+	if err != nil {
+		kerr.SysErrPrintf("selectUserLog: usersLog.Begin() error=%s", err.Error())
+		return nil
+	}
+	rows, err = usersLog.Query(selelctClause)
+	if err != nil {
+		//tx.Rollback()
+		kerr.SysErrPrintf("selectUserLog: tx.Query selelctClause=%s; error=%s", selelctClause, err.Error())
+		return nil
+	}
+	//tx.Commit()
+	return rows
+}
+
+func selectUserLog2(selelctClause string) (rows *sql.Rows, err error) {
+	//ksess190820_1
+	if usersLog == nil {
+		err = fmt.Errorf("ksess.selectUserLog2: usersLog is nill; selelctClause=%s", selelctClause)
+		return
+	}
+	if sessCP.NotUserLogging {
+		err = fmt.Errorf("ksess.selectUserLog2: loging not allowed; selelctClause=%v", selelctClause)
+		return
+	}
+	rows, err = usersLog.Query(selelctClause)
+	if err != nil {
+		err = fmt.Errorf("ksess.selectUserLog2: usersLog.Query selelctClause=%s; error=%s", selelctClause, err.Error())
+		return
+	}
+	return
+}
+
+func SelectForLastInstall(nl string) (res string) {
+	var (
+		selectClause string
+		rows         *sql.Rows
+
+		//recId     string
+		user_id string //
+		//tag       string //
+		//tp        string //"ws" or "http"
+		//ip    string //IP address
+		//port  string //TCP port
+		url   string //"<action name>:..." or "/..."
+		start string // a moment of time in const startFormat
+		dur   int64
+		//bytes_in  int64
+		//bytes_out int64
+		done        int64 // 0 - not done
+		rowAsString = func() string {
+			return fmt.Sprintf("user_id=%v, url=%v, start=%v, dur=%v, done=%v", user_id, url, start, dur, done)
+		}
+	)
+	if sessCP.NotUserLogging {
+		res = "Запись в сессионный лог выключена"
+		return
+	}
+
+	res = fmt.Sprintf("Записи SessionLog последней инсталляции(%v)", serverStart) + nl
+	selectClause = fmt.Sprintf("SELECT user_id, url, start, dur, done FROM actionLog WHERE (start>\"%s\")and(tp=\"http\") ORDER BY start", serverStart)
+	rows = selectUserLog(selectClause)
+	if rows == nil {
+		res = res + "Должно быть ошибка - rows==mil. См. SysErrorLog" + nl
+	} else {
+		for rows.Next() {
+			if err := rows.Scan(&user_id, &url, &start, &dur, &done); err != nil {
+				break
+			}
+			res = res + rowAsString() + nl
+		}
+		if err := rows.Err(); err != nil {
+			res = res + err.Error() + nl
+		}
+	} //else rows==nil
+	res = res + "-------------------------------------"
+	return res
+}
+
+func SelectForUserSinceLastInstall(user_id string, nl string) (res string) {
+	var (
+		selectClause string
+		rows         *sql.Rows
+
+		url         string //"<action name>:..." or "/..."
+		start       string // a moment of time in const startFormat
+		dur         int64
+		done        int64 // 0 - not done
+		rowAsString = func() string {
+			return fmt.Sprintf("user_id=%v, url=%v, start=%v, dur=%v, done=%v", user_id, url, start, dur, done)
+		}
+	)
+	if sessCP.NotUserLogging {
+		res = "Запись в сессионный лог выключена"
+		return
+	}
+
+	res = fmt.Sprintf("Записи SessionLog пользователя %v от последней инсталляции(%v)", user_id, serverStart) + nl
+	selectClause = fmt.Sprintf("SELECT user_id, url, start, dur, done FROM actionLog WHERE (start>\"%s\")and(tp=\"http\")and(user_id=\"%s\") ORDER BY start", serverStart, user_id)
+	rows = selectUserLog(selectClause)
+	if rows == nil {
+		res = res + "Должно быть ошибка - rows==mil. См. SysErrorLog" + nl
+	} else {
+		for rows.Next() {
+			if err := rows.Scan(&user_id, &url, &start, &dur, &done); err != nil {
+				break
+			}
+			res = res + rowAsString() + nl
+		}
+		if err := rows.Err(); err != nil {
+			res = res + err.Error() + nl
+		}
+	} //else rows==nil
+	res = res + "-------------------------------------"
+	return res
+}
+
+func SelectForUserSince(user_id string, since string, nl string) (res string) {
+	var (
+		selectClause string
+		rows         *sql.Rows
+		tag          string
+		url          string //"<action name>:..." or "/..."
+		start        string // a moment of time in const startFormat
+		dur          int64
+		done         int64 // 0 - not done
+		rowAsString  = func() string {
+			return fmt.Sprintf("user_id(tag)=%v(%v), url=%v, start=%v, dur=%v, done=%v", user_id, tag, url, start, dur, done)
+		}
+	)
+
+	res = fmt.Sprintf("Записи пользователя %s после %s", user_id, since) + nl
+	//selectClause = fmt.Sprintf("SELECT user_id, url, start, dur, done FROM actionLog WHERE (user_id LIKE \"%v\")and(tp=\"http\") ORDER BY start", user_id)
+	selectClause = fmt.Sprintf("SELECT user_id, tag, url, start, dur, done FROM actionLog WHERE (user_id LIKE \"%s\")and(tp=\"http\"and(start>\"%s\")) ORDER BY start", user_id, since)
+	rows = selectUserLog(selectClause)
+	if rows == nil {
+		res = res + "Должно быть ошибка - rows==mil. См. SysErrorLog" + nl
+	} else {
+		for rows.Next() {
+			if err := rows.Scan(&user_id, &tag, &url, &start, &dur, &done); err != nil {
+				break
+			}
+			res = res + rowAsString() + nl
+		}
+		if err := rows.Err(); err != nil {
+			res = res + err.Error() + nl
+		}
+	} //else rows==nil
+	if rows != nil {
+		rows.Close()
+	}
+	res = res + "-------------------------------------"
+	return res
+}
+
+func selectTx(action, userId, connStr, proc, since string) (rows *sql.Rows, err error) {
+	var wC = " WHERE 1"
+	action = strings.TrimSpace(action)
+	userId = strings.TrimSpace(userId)
+	connStr = strings.TrimSpace(connStr)
+	proc = strings.TrimSpace(proc)
+	since = strings.TrimSpace(since)
+
+	if action != "" {
+		wC = wC + " AND ACTION LIKE \"%" + action + "%\""
+	}
+	if userId != "" {
+		wC = wC + " AND USERID=\"" + userId + "\""
+	}
+	if connStr != "" {
+		wC = wC + " AND CONNSTRING=\"" + connStr + "\""
+	}
+	if proc != "" {
+		wC = wC + " AND PROC LIKE \"%" + proc + "%\""
+	}
+	if since != "" {
+		wC = wC + " AND OPENED>\"" + since + "\" ORDER BY OPENED"
+	}
+
+	return selectUserLog2("SELECT ACTION, USERID, CONNSTRING, PROC, OPENED, DUR FROM TXLOG" + wC)
+}
+
+//SelectTx returns a string representation of rows from txLog table in the ???
+//It calls selectTx and expects from it rows with columnf from the the select query
+//SELECT ACTION, USERID, CONNSTRING, PROC, OPENED, DUR FROM TXLOG
+//It trims the parameters leading and trailing blank characters
+func SelectTx(action, userId, connStr, proc, since, nl string) (res string, err error) {
+	var (
+		rows             *sql.Rows
+		dur, totalDurStr string
+		totalDurInt      int
+		durInt           int
+		num              int
+	)
+	if strings.TrimSpace(nl) == "" {
+		nl = "\n"
+	}
+
+	if rows, err = selectTx(action, userId, connStr, proc, since); err != nil {
+		err = fmt.Errorf("ksess.SelectTx err =%v", err.Error())
+		err = fmt.Errorf("ksess.SelectTx err =%v", err.Error())
+		return
+	}
+
+	//SELECT ACTION, USERID, CONNSTRING, PROC, OPENED, DUR FROM TXLOG
+	for rows.Next() {
+		num++
+
+		if err = rows.Scan(&action, &userId, &connStr, &proc, &since, &dur); err != nil {
+			err = fmt.Errorf("ksess.SelectTx err =%v", err.Error())
+			return
+		}
+		if durInt, err = strconv.Atoi(dur); err != nil {
+			err = fmt.Errorf("ksess.SelectTx err =%v", err.Error())
+			return
+		}
+		totalDurInt = totalDurInt + durInt
+		//res = res + fmt.Sprintf("| %v | %v | %v | %v | %v |%v", userId, connStr, proc, since, dur, nl)
+		res = res + fmt.Sprintf("action = %v%v", action, nl) +
+			fmt.Sprintf("user id = %v%v", userId, nl) +
+			fmt.Sprintf("%v%v", connStr, nl) +
+			fmt.Sprintf("%v%v", proc, nl) +
+			fmt.Sprintf("opened =%v dur=%v%v", since, dur, nl) +
+			fmt.Sprintf("---------------------(%v)%v", num, nl)
+	}
+
+	if err := rows.Err(); err != nil {
+		err = fmt.Errorf("ksess.SelectTx err =%v", err.Error())
+		return "", err
+	}
+	totalDurStr = strconv.Itoa(totalDurInt)
+	res = res + nl + "----------------------total duration =" + totalDurStr + "msec"
+	return
+}
+
+//selectQuerys selects from actionLog only those with tp="http"
+//190806 The question is: why the condition for a url is not "like?" How can  that be lost? I surely remember that I have done that thing!
+func selectQueries(user_id, url_, since string) (rows *sql.Rows, err error) {
+	var wC = " WHERE TP=\"http\""
+	user_id = strings.TrimSpace(user_id)
+	url_ = strings.TrimSpace(url_)
+	since = strings.TrimSpace(since)
+
+	if user_id != "" { //190806
+		wC = wC + " AND USER_ID = \"" + user_id + "\""
+	}
+	//if url_ != "" {
+	//	wC = wC + " AND URL=\"" + url_ + "\""
+	//}
+	if url_ != "" {
+		wC = wC + " AND URL LIKE \"%" + url_ + "%\""
+	}
+	if since != "" {
+		wC = wC + " AND START>\"" + since + "\""
+	}
+
+	wC = wC + " ORDER BY USER_ID, START"
+
+	kerr.PrintDebugMsg(false, "actionsLog", fmt.Sprintf("ksess. selectQueries: wC=%v", wC))
+	return selectUserLog2("SELECT USER_ID, URL, START, DUR FROM ACTIONLOG" + wC)
+}
+
+//After using for right purpose third parameter is using for START field values
+func SelectQueries_As_HTML_Table(user_id, url_, since string) (res string, err error) {
+	var (
+		rows             *sql.Rows
+		dur, totalDurStr string
+		totalDurInt      int
+		durInt           int
+	)
+	kerr.PrintDebugMsg(false, "actionsLog", "ksess.SelectQueries_As_HTML_Table HERE!")
+	//if strings.TrimSpace(nl) == "" {
+	//	nl = "\n"
+	//}
+
+	if rows, err = selectQueries(user_id, url_, since); err != nil {
+		err = fmt.Errorf("ksess.SelectQueries err =%v", err.Error())
+		return
+	}
+
+	res = "<table>"
+	for rows.Next() {
+		if err = rows.Scan(&user_id, &url_, &since, &dur); err != nil {
+			err = fmt.Errorf("ksess.SelectQueries err =%v", err.Error())
+			return
+		}
+		if durInt, err = strconv.Atoi(dur); err != nil {
+			err = fmt.Errorf("ksess.SelectQueries err =%v", err.Error())
+			return
+		}
+		url_, _ = url.PathUnescape(url_)
+		totalDurInt = totalDurInt + durInt
+		//user_id = kutils.StrToLen(user_id, 10)
+		//url = kutils.StrToLen(url, 100)
+		//since = kutils.StrToLen(since, 10)
+		res = res + fmt.Sprintf("<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>", user_id, url_, since, dur)
+
+	}
+
+	if err := rows.Err(); err != nil {
+		err = fmt.Errorf("ksess.SelectQueries err =%v", err.Error())
+		return "", err
+	}
+	totalDurStr = strconv.Itoa(totalDurInt)
+	res = res + "</table><br>----------------------total duration =" + totalDurStr + "msec"
+	return
+}
+
+//InsertDiaryRecord insert a diary record into the diary table.
+//For the day field it gives value of current day in format 20060102, that is YYYYMMDD
+func InsertDiaryRecord(user, version, reason, content string) (err error) {
+	var day string
+	var tx *sql.Tx
+	if usersLog == nil {
+		err = fmt.Errorf("There is not log DB")
+		return
+	}
+
+	if tx, err = usersLog.Begin(); err != nil {
+		return
+	}
+
+	day = time.Now().Format("20060102")
+
+	user = strings.ToLower(strings.TrimSpace(user))
+	version = strings.ToLower(strings.TrimSpace(version))
+	reason = strings.ToLower(strings.TrimSpace(reason))
+
+	_, err = tx.Exec("INSERT INTO diary VALUES (?, ?, ?, ?,?)",
+		day, user, version, reason, content)
+
+	if err != nil {
+		tx.Rollback()
+		return
+	}
+	tx.Commit()
+	return
+
+}
+
+//select diary
+func selectDiary(day, user, version, reason string) (rows *sql.Rows, err error) {
+	var wC = " WHERE true"
+	day = strings.TrimSpace(day)
+	user = strings.TrimSpace(user)
+	version = strings.TrimSpace(version)
+	reason = strings.TrimSpace(reason)
+
+	if day != "" {
+		wC = wC + " AND DAY >=\"" + day + "\""
+	}
+	if user != "" {
+		wC = wC + " AND USER LIKE \"%" + user + "%\""
+	}
+	if version != "" {
+		wC = wC + " AND VERSION LIKE \"%" + version + "%\""
+	}
+	if reason != "" {
+		wC = wC + " AND REASON LIKE\"%" + reason + "%\" ORDER BY DAY"
+	}
+
+	return selectUserLog2("SELECT day, user, version, reason, content FROM DIARY" + wC)
+}
+
+//SearchDiary_HTML_out selects records from the dairy table and returns them as HTML table
+//An empty parameter stands for any
+//If the first parameter (i.e. the day) is not empty, it must be as YYYYMMDD, for example 200190504, otherwise an error will be.
+//The rest parameters are expected as substrings of corresponded stored values.
+//That is they are compared through the operator LIKE %<a parameter value>%.
+func SearchDiary_HTML_out(day, user, version, reason string) (res string, err error) {
+	var (
+		rows    *sql.Rows
+		content string
+	)
+
+	day = strings.TrimSpace(day)
+
+	if (len(day) != 0) && (len(day) != 8) {
+		err = fmt.Errorf("ksess.SearchDiary: The day must by a succession of eight symbols (digits).")
+		return
+	}
+	if len(day) != 0 {
+		if _, err = strconv.Atoi(day); err != nil {
+			err = fmt.Errorf("ksess.SearchDiary bad day format, err =%v", err.Error())
+			return
+		}
+	}
+
+	if rows, err = selectDiary(day, user, version, reason); err != nil {
+		err = fmt.Errorf("ksess.SearchDiary: err =%v", err.Error())
+		return
+	}
+
+	res = "<table>"
+	for rows.Next() {
+		if err = rows.Scan(&day, &user, &version, &reason, &content); err != nil {
+			err = fmt.Errorf("ksess.SearchDiary: rows.Scan err =%v", err.Error())
+			return
+		}
+		res = res + fmt.Sprintf("<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr><tr><td>%v</td></tr>", day, user, version, reason, content)
+	}
+	res = res + "</table>"
+	return
+}

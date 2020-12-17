@@ -1,0 +1,2 @@
+201217 06:05
+commit -m "all of contaning of the kot_common has copied dully here (except doc files)"

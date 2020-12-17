@@ -1,5 +1,5 @@
 //StdRd - 180204 ver0_4
-package mutils
+package kutils
 
 import (
 	"fmt"

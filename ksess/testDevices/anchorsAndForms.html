@@ -1,0 +1,53 @@
+
+<p><a target="return" href="/ping?CONTROL_PASSWORD=qqq">/ping?CONTROL_PASSWORD=qqq</a></p>
+<p><a target="return" href="/logout"> href="/logout"</a></p>
+<p><a target="return" href="/test?which=stopServer"> SHUTDOWN </a></p>
+<p><a target="return" href="/test?which=pended">/test?which=pended</a></p>
+<p><a target="return" href="/test?which=qqq">/test?which=qqq</a></p>
+<p><a target="return" href="/test?which=sessList">/test?which=sessList СПИСОК СЕССИЙ</a></p>
+<p><a target="return" href="/test?which=idleList">/test?which=idleList СПИСОК ПРОСТОЕВ</a></p>
+<p><a target="return" href="/test?which=users">/test?which=users СПИСОК ИДЕНТИФИКАТОРОВ ЗАРЕГИСИРИРОВАННЫХ ПОЛЬЗОВАТЕЛЕЙ</a></p>
+<p><a target="return" href="/test?which=mirror">/test?which=mirror</a></p>
+<p><a target="return" href="/test?which=serv_environ">/test?which=serv_environ</a></p>
+<p><a target="return" href="/test?which=actual_SCP">//test?which=actual_SCP</a></p>
+<p><a target="return" href="/test?which=about">//test?which=about</a></p>
+<p><a target="return" href="/test?which=lastInstall">//test?which=lastInstall</a></p>
+<p><a target="return" href="/close_kot?CONTROL_PASSWORD=qqq">/close_kot ОСТАНОВИТЬ СЕРВЕР</a></p>
+
+
+
+
+<p>What have the user done since it?</p>
+<form action="/test" target="return">
+	<input type="text" readonly name="which" value="userSince"><br>
+	User <input type="text" name="user" value="My pet"><br>
+	Since <input type="text" name="since" value="qqq"><br>
+	<input type="submit" value="Submit">
+</form>
+<p>--------------------------------------</p>
+
+
+<p>What have the user done since the last installation?</p>
+<form action="/test" target="return">
+	<input type="text" readonly name="which" value="userSinceLastInstall"><br>
+	User <input type="text" name="user" value="My pet"><br>
+	<input type="submit" value="Submit">
+</form>
+
+<p>Here you may get the info about an user by its itentifier</p>
+<form action="/test" target="return">
+	<input type="text" readonly name="which" value="userInfo"><br>
+	User <input type="text" name="user" value="111"><br>
+	<input type="submit" value="Submit">
+</form>
+
+
+
+
+<iframe name="return" width="100%">
+  <p>Your browser does not support iframes.</p>
+</iframe>
+
+</body>
+</html>
+{{end}}

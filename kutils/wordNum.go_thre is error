@@ -1,0 +1,86 @@
+// wordNum
+package kutils
+
+import (
+	"fmt"
+	"strconv"
+)
+
+type NumPair struct {
+	X int
+	Y int
+}
+
+func (pair NumPair) String() string {
+	return strconv.Itoa(pair.Y) + "." + strconv.Itoa(pair.X)
+}
+
+// the nextPair function uses this algorithm
+//
+//	y
+//
+//	→→→
+//	↑		↓
+//	←		↓
+//		↑	↓
+//	→		 	→	x
+//
+//
+func nextPair(pair NumPair) NumPair {
+	if (pair.X == 0) && (pair.Y == 0) {
+		return NumPair{1, 0}
+	}
+	if pair.Y == 0 { //ordinate is null, we are on axis x
+		if (pair.X % 2) == 0 { //x is even, we must move right
+			return NumPair{pair.X + 1, 0}
+		} else {
+			return NumPair{pair.X, 1}
+		} //x is odd, we must move up
+	}
+	if pair.X == 0 { //abscissa is null, we are on axis y
+		if (pair.Y % 2) == 0 { //y is even, we must move right
+			return NumPair{pair.Y, 1}
+		} else {
+			return NumPair{pair.Y + 1, 0}
+		} //y is odd, we must move up
+	}
+	if pair.X == pair.Y { //we are on the bisector
+		if (pair.Y % 2) == 0 { //y is even, we must move down
+			return NumPair{pair.X, pair.Y - 1}
+		} else {
+			return NumPair{pair.X - 1, pair.Y}
+		} //y is odd, we must move left
+	}
+	//below we are not on axises or bisector
+	if pair.X > pair.Y { //we are on a vertical line
+		if (pair.X % 2) == 0 { //x is even, we must move down
+			return NumPair{pair.X, pair.Y - 1}
+		} else {
+			return NumPair{pair.X, pair.Y + 1}
+		} //x is odd, we must move up
+
+	}
+	if pair.X < pair.Y { //we are on a horizontal line
+		if (pair.Y % 2) == 0 { //x is even, we must move right
+			return NumPair{pair.X + 1, pair.Y}
+		} else {
+			return NumPair{pair.X - 1, pair.Y}
+		} //x is odd, we must move left
+	}
+	panic("nextPair: where are we???")
+}
+func PairNumber(pair NumPair) (n int64) {
+	var p = NumPair{}
+	for {
+		p = nextPair(p)
+		n++
+		fmt.Printf("--M--PairNumber: n=%v; p=%v\n", n, p)
+		if (pair.X == p.X) && (pair.Y == p.Y) {
+			break
+		}
+		if n > 124 {
+			panic("PairNumber: n>1024")
+		}
+	}
+	return n
+}

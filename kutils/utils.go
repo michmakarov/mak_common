@@ -1,10 +1,9 @@
-package mutils
+package kutils
 
 import (
 	"bufio"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"reflect"
@@ -14,7 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	//"kot_common/kerr"
+	"kot_common/kerr"
 	"strings"
 
 	"gopkg.in/gomail.v2"
@@ -38,10 +37,11 @@ var FmtFlag int
 var (
 	devMailSettings *DevMailSettings
 	lettersNumber   int32 //number of sent letters
-	lettersTotalDur int64 //total time that was speared for sending all letters that was counted by ettersNumber
+	lettersTotalDur int64 //total time that was speared for sending all letters that was counted by lettersNumber
 	letterMaxDur    int64 // max time that was speared for sending letter
 )
 
+//revised 191225
 func SetDevMailSettings(
 	MAIL_USER_EMAIL string,
 	MAIL_USER_PASS string,
@@ -58,6 +58,10 @@ func SetDevMailSettings(
 		MAIL_DEVELOPERS,
 		AppData,
 	}
+	lettersNumber = 0
+	lettersTotalDur = 0
+	letterMaxDur = 0
+
 }
 
 func GetMailStatistic() string {
@@ -373,7 +377,8 @@ func GetWantedLines(r io.Reader, filter string) (lns []string, err error) {
 	return
 }
 
-//191028struct tags
+//191028
+//revised 191225
 func SendDeveloper(subject, text string) {
 	var (
 		arr_to []string
@@ -395,17 +400,13 @@ func SendDeveloper(subject, text string) {
 			atomic.StoreInt64(&letterMaxDur, dur)
 		}
 		if rec := recover(); rec != nil {
-			//log.Print(GetRecoverErrorText(rec))
-			//kerr.SysErrPrintf("Panic of kutils.SendDeveloper; rec=%v", rec)
-			panic(fmt.Sprintf("Panic of mutils.SendDeveloper; rec=%v", rec))
+			kerr.SysErrPrintf("Panic of kutils.SendDeveloper; rec=%v", rec)
 		}
 	}()
 
 	if devMailSettings == nil {
-		//kerr.SysErrPrintf("kutils.SendDeveloper: no mail settings")
-		//return
-		panic(fmt.Sprint("mutils.SendDeveloper: no mail settings"))
-
+		kerr.SysErrPrintf("kutils.SendDeveloper: no mail settings")
+		return
 	}
 
 	arr_to = strings.Split(devMailSettings.MAIL_DEVELOPERS, ",")
@@ -417,7 +418,7 @@ func SendDeveloper(subject, text string) {
 	if subject != "" {
 		m.SetHeader("Subject", subject)
 	} else {
-		m.SetHeader("Subject", "Prog problem")
+		m.SetHeader("Subject", "Нет темы")
 	}
 
 	text = "(" + devMailSettings.AppData + ")" + text
@@ -435,20 +436,45 @@ func SendDeveloper(subject, text string) {
 
 }
 
-
-func PrintFileContent(fName string){
-	var err error
-	var f *os.File
-	var buff []byte
-	if f, err = os.Open(fName); err!=nil{
-		fmt.Printf("File:%v:Open err=%v\n",fName, err.Error())
-		return
+//191225
+func messFronPanic(rec interface{}, contextUser int, send bool) (mess []byte) {
+	var User string // string representation of contextUser
+	var recToStr = func(rec interface{}) string {
+		recType := reflect.TypeOf(rec).Name()
+		if recType == "" {
+			return "Невозможно получить текст из interface{}: Type not defined"
+		}
+		switch recType {
+		case "error":
+			err, _ := rec.(error)
+			return fmt.Sprintf("%v", err.Error())
+		case "string":
+			s, _ := rec.(string)
+			return fmt.Sprintf("%v", s)
+		default:
+			return fmt.Sprintf("imposed = %v ", rec)
+		}
+	} //var recToStr
+	if contextUser < 0 {
+		User = "?(" + strconv.Itoa(contextUser) + ")"
+	} else {
+		User = strconv.Itoa(contextUser)
 	}
-	if buff, err = ioutil.ReadAll(f); err!=nil{
-		fmt.Printf("Reading of:%v: err=%v\n",fName, err.Error())
-		return
+	s := fmt.Sprintf("Пользователь %v учинил %v", User, recToStr(rec))
+	if send {
+		SendDeveloper("panic", s)
 	}
-	fmt.Println(string(buff))
-
+	return []byte(s)
 }
 
+//201208 07:10 It takes a number as string and returns next number also as string
+func IncreaseNumber(num string) (next string, err error) {
+	var n int
+	if n, err = strconv.Atoi(num); err != nil {
+		err = fmt.Errorf("kutils.IncreaseNumber: converting to int error=%v", err.Error())
+		return
+	}
+	n++
+
+	return strconv.Itoa(n), nil
+}

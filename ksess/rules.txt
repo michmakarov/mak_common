@@ -1,0 +1,6 @@
+LOGGING
+1. if a programer have not deny logging and there have been an error of creating it then GreateHub returns error.
+2. LogsDir (string) carry a directory where log files are being placed.
+It may be empty, in this case the files will be placed into the working directory.
+Othewise it must be ended by "/" or "\" in depending of the platform.
+
