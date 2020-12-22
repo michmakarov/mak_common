@@ -482,10 +482,8 @@ func calcWSResponse(c *sessClient, inMess []byte) {
 		ip = c.conn.RemoteAddr().String()
 		port = "?"
 	}
-	recId, err = kutils.TrueRandInt()
-	if err != nil {
-		kerr.SysErrPrintf("calcHTTPResponse: kutils.TrueRandInt() returns error")
-	}
+	recId = kutils.TrueRandInt()
+
 	action_name = "unknown"
 	begin = time.Now()
 	start = begin.Format(startFormat)

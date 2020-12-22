@@ -49,23 +49,6 @@ func GetCtxStrPar(ctx context.Context, ctxKey string) (val string, ok bool) {
 	return
 }
 
-/* see History 201203 06:46
-// Control request answers
-type HttpPingAnswer struct {
-	PingTag      string
-	From         string
-	Answertime   string
-	RequestCount int64
-}
-type HttpCloseKotAnswer struct {
-	PingTag      string
-	From         string
-	Answertime   string
-	RuquestCount int64
-	Message      string
-}
-*/
-
 //what is the Feeler
 //It is the front filter of HTTP requests
 //That is that the Feeler analysing incoming requests and rejecting all besides the allowed ones
@@ -106,12 +89,6 @@ func GetFrontLogName() string {
 func createFeeler(h http.Handler) (f *feeler, err error) {
 	//var FlrLogFileName string
 
-	if !sessCP.NotAgentDebugging {
-		if err = setEmptyAgents(); err != nil {
-			return
-		}
-	}
-
 	if sessCP.Debug != 0 {
 		printToConsole = true
 	}
@@ -130,46 +107,6 @@ func createFeeler(h http.Handler) (f *feeler, err error) {
 	return f, nil
 }
 
-/* 201203 06:46
-func (f *feeler) checkCommandRequst(w http.ResponseWriter, r *http.Request) (ok bool) {
-	var controlPassword string
-	if controlPassword = strings.TrimSpace(r.FormValue("CONTROL_PASSWORD")); controlPassword == "" {
-		w.WriteHeader(400)
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Write([]byte("There is not CONTROL_PASSWORD parameter or it is empty"))
-		return
-	}
-
-	if controlPassword != sessCP.ControlPassword {
-		w.WriteHeader(400)
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Write([]byte("The parameter CONTROL_PASSWORD does not equal sessCP.ControlPassword"))
-		return
-	}
-
-	ok = true
-	return
-}
-
-func (f *feeler) checkGuardianTag(w http.ResponseWriter, r *http.Request) (ok bool) {
-	var guardianTag string
-	guardianTag = strings.TrimSpace(r.FormValue("GUARDIAN_TAG"))
-
-	if f.guardianTag == "" {
-		f.guardianTag = guardianTag
-	} else {
-		if f.guardianTag != guardianTag {
-			w.WriteHeader(400)
-			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-			w.Write([]byte("The parameter GUARDIAN_TAG does not equal the established"))
-			return
-		}
-	}
-	ok = true
-	return
-}
-*/
-
 func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var (
 		cookData      sessCookieData
@@ -180,14 +117,16 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		requestCouter int64 //!!! 190820_2 The problem of requests counter
 	)
 	defer func() {
-		if rec := recover(); rec != nil {
+		var rec interface{}
+		if rec = recover(); rec != nil {
 			//kerr.PrintDebugMsg(false, "checker", "ServeHTTP panic")
-			kerr.SysErrPrintf("feeler cought err = %v", rec)
+			kerr.SysErrPrintf("feeler ServeHTTP coughts panic = %v", rec)
 			if sessCP.Debug != 0 {
 				debug.PrintStack()
 			}
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			w.WriteHeader(500)
-			w.Write([]byte(fmt.Sprintf("feeler cought err = %v", rec)))
+			w.Write([]byte(fmt.Sprintf("feeler panic err = %v", rec)))
 		}
 	}()
 
@@ -195,95 +134,19 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if sessCP.NotFeelerLogging {
 			return
 		}
-		//rr := requestRecord{count, time.Now(), khttputils.ReqLabel(r), cookData.UserID, do}
-		//!!! 4) A request counter problem(ksess_190820:190823; ksodd_190819:190823)
-		//rr := requestRecord{atomic.LoadInt64(&f.feelerCount), time.Now(), khttputils.ReqLabel(r), cookData.UserID, do}
+
 		rr := requestRecord{requestCouter, time.Now(), khttputils.ReqLabel(r), cookData.UserID, do, currConnStateDescr.descr}
 		f.flgr.send <- rr
 	}
 
-	/* 201203 06:46
-
-	var WriteControlReqToLog = func(do string) { //181016
-		if sessCP.NotFeelerLogging {
-			return
-		}
-		//!!! 4) A request counter problem(ksess_190820:190823; ksodd_190819:190823)
-		//rr := requestRecord{f.feelerCount, time.Now(), khttputils.ReqLabel(r), -100, do}
-		rr := requestRecord{requestCouter, time.Now(), khttputils.ReqLabel(r), -100, do}
-		f.flgr.send <- rr
-	}
-	*/
-
 	requestCouter = atomic.AddInt64(&f.feelerCount, 1)
 
 	r.Method = strings.ToUpper(r.Method)
-	/* //see History 201203 06:46
-	if r.URL.Path == "/ping" { //181019//181022//181024//181102
-		var ok bool
-		var err error
-		//var errCode int
-		var pingTag string
-		//var pa HttpPingAnswer //see History 201203 06:46
-		var answer []byte
-		if ok = f.checkCommandRequst(w, r); ok {
-			WriteControlReqToLog("accepted")
-		} else {
-			WriteControlReqToLog("refused")
-			return
-		}
-		if ok = f.checkGuardianTag(w, r); !ok {
-			return
-		}
 
-		pingTag = strings.TrimSpace(r.FormValue("PING_TAG"))
-		if pingTag == "" {
-			pingTag = "no ping tag"
-		}
-		pa.PingTag = pingTag
-		if pa.From, err = os.Hostname(); err != nil {
-			pa.From = err.Error()
-		}
-		pa.Answertime = time.Now().Format(startFormat)
-		pa.RequestCount = f.feelerCount
-		answer, _ = json.Marshal(pa)
-		w.Header().Set("Contenr-Type", "application/json; charset=utf-8")
-		w.Write(answer)
+	kerr.PrintDebugMsg(false, "DFLAG201222_20:02", fmt.Sprintf("feeler:(cnt=%v)%v--%v", requestCouter, r.URL.Query(), sessCP.AgentPassword))
+	if checkAgent(w, r) != nil { //Else the request has passed checking and may be performed.
 		return
 	}
-
-	if r.URL.Path == "/close_kot" { //181024//161102
-		var ok bool
-		//var err error
-		//var errCode int
-		var pingTag string
-		//var pa HttpCloseKotAnswer //see History 201203 06:46
-		var answer []byte
-
-		if ok = f.checkCommandRequst(w, r); ok {
-			WriteControlReqToLog("accepted")
-		} else {
-			WriteControlReqToLog("refused")
-			return
-		}
-
-		pingTag = strings.TrimSpace(r.FormValue("PING_TAG"))
-		if pingTag == "" {
-			pingTag = "no ping tag"
-		}
-		pa.PingTag = pingTag
-		pa.Answertime = time.Now().Format(startFormat)
-		pa.RuquestCount = f.feelerCount
-		pa.Message = closeServer()
-		answer, _ = json.Marshal(pa)
-		w.Header().Set("Contenr-Type", "application/json; charset=utf-8")
-		w.Write(answer)
-		return
-	} //r.URL.Path == "/close_kot"
-	if doControlRequest(w, r, WriteControlReqToLog) {
-		return
-	}
-	*/
 
 	c, cookData, err = getSession(r)
 	if err != nil {
@@ -302,13 +165,13 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		kerr.PrintDebugMsg(false, "HurryForbidden", fmt.Sprintf("feeler:hurry=%v", hurry))
 		if hurry != "" {
 			w.WriteHeader(409)
-			w.Write([]byte(fmt.Sprintf("<p>No hurry:%v</p>", hurry)))
+			w.Write([]byte(fmt.Sprintf("<p>Do not  hurry:%v</p>", hurry)))
 			return
 		}
 
 	}
 
-	kerr.PrintDebugMsg(false, "ServeHTTP_201203_1129", fmt.Sprintf("ServeHTTP:before if doHijackedRequest; cookData=%v, c=%v", cookData, c))
+	//kerr.PrintDebugMsg(false, "ServeHTTP_201203_1129", fmt.Sprintf("ServeHTTP:before if doHijackedRequest; cookData=%v, c=%v", cookData, c))
 
 	if doHijackedRequest(w, r, cookData, c) {
 		WriteToLog("accepted")

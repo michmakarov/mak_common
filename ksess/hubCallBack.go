@@ -14,9 +14,8 @@ import (
 	//"golang.org/x/net/context"
 
 	"mak_common/kerr"
-	"mak_common/kutils"
-
-	"github.com/gorilla/mux"
+	//"mak_common/kutils"
+	//"github.com/gorilla/mux"
 )
 
 //201214 07:03 see also rels readme.txt 201214_
@@ -65,7 +64,7 @@ var (
 	parserSocket         ParserSocket         //1
 	extractUsers         ExtractUsers         //2
 	checkUserCredentails CheckUserCredentails //3
-	reqMultiplexer       *mux.Router          //4
+	reqMultiplexer       http.Handler         //*mux.Router          //4
 	checkURLPath         URLPathChecker       //5
 	getInitData          GetInitData          //6
 )
@@ -78,7 +77,7 @@ var (
 func CreateHub(ps ParserSocket, //1 not nill
 	exUsers ExtractUsers, //2
 	cuc CheckUserCredentails, //3 not nill
-	mx *mux.Router, //4 not nill
+	mx http.Handler, //201222 16:25 //mx *mux.Router, //4 not nill
 	URLCheker URLPathChecker, //5
 	initDataGetter GetInitData, //6
 	scp *SessConfigParams) (err error) { //CreateHub body
@@ -182,13 +181,14 @@ func CreateHub(ps ParserSocket, //1 not nill
 		scp.Admins = []int{0}
 	}
 
-	if scp.ControlPassword == "" { //181024_2
-		scp.ControlPassword, _ = kutils.TrueRandInt()
-	}
+	//201222 06:47 agentPassword is instead;
+	//if scp.ControlPassword == "" { //181024_2 //201221 07:44 Let's it be
+	//	scp.ControlPassword = kutils.TrueRandInt()
+	//}
 
-	if scp.AgentFileDir == "" { //181102
-		scp.AgentFileDir = "agents"
-	}
+	//if scp.AgentFileDir == "" { //181102 /201221 06:38
+	//	scp.AgentFileDir = "agents"
+	//}
 
 	if scp.WithoutHTTPActivity > 0 {
 		if scp.WithoutHTTPActivity < 15 { //181121_1

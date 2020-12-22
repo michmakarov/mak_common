@@ -1,2 +1,11 @@
 201217 06:05
 commit -m "all of contaning of the kot_common has copied dully here (except doc files)"
++++++++++++++++++++++++++++++++++
+201221 12:36 ksess
+What is a registered agent? Or, in other words, when two requests are considered to belong the same agent?
+Answer: when combination of the remote address and User-Agent http header is the same.
++++++++++++++++++++++++++++++++++
+201222 05:48 SessConfigParams
+agentPassword (former ControlPassword) is instead of NoAgent
+_______16:17 Fourth param of CreateHub (mx) - it must be of type http.Handler.
+

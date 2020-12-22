@@ -3,23 +3,28 @@ package ksess
 
 import (
 	"fmt"
-	"io"
+	//"io"
 
 	//"io/ioutil"
-	"html/template"
+	//"html/template"
 	"mak_common/kutils"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
+
+	//"os"
+
+	//"path/filepath"
+	//"strings"
+	"mak_common/kerr"
 	"sync"
 	"time"
 )
 
 const maxAgents = 100
+const agentPasswordParName = "a_p_p_n"
 
 type Agent struct {
-	RegTime       time.Time
+	RegTime time.Time //201221 12:25 The moment of registration; The next data has been at this moment
+
 	RemoteAddress string //r.RemoteAddr
 	UserAgent     string //r.UserAgent()
 	UserId        int    //cookData.UserID see getSession
@@ -27,20 +32,35 @@ type Agent struct {
 
 type Agents map[string]*Agent
 
+//is registered
 var agents Agents = make(map[string]*Agent)
 var agentsMutex sync.Mutex
 
-func (agents Agents) Register(r *http.Request) (sugnature string, err error) {
+func (a *Agent) String() string {
+	return fmt.Sprintf("Time=%v;RA=%v;UA=%v", a.RegTime.Format("20060102_150405"), a.RemoteAddress, a.UserAgent)
+}
+
+//The register registers the request it if it has not registered yet. see Registered
+//It is helper function for checkAgent
+//Errors:
+//err = fmt.Errorf("Agents.register: too many agents; allowed not more %v", maxAgents)
+//201221 07:08 201222 07:06
+func (agents Agents) register(r *http.Request) (signature string, err error) {
 	var sessionData SessionData
-	var signature string
 	var a Agent
 
 	if len(agents) >= maxAgents {
 		err = fmt.Errorf("Agents.Register: too many agents; allowed not more %v", maxAgents)
 		return
 	}
+
+	signature = agents.Registered(r)
+	if signature != "" {
+		return
+	}
+
 	sessionData = GetSession(r)
-	signature, _ = kutils.TrueRandInt()
+	signature = kutils.TrueRandInt()
 	a.RegTime = time.Now()
 	a.RemoteAddress = r.RemoteAddr
 	a.UserAgent = r.UserAgent()
@@ -51,17 +71,17 @@ func (agents Agents) Register(r *http.Request) (sugnature string, err error) {
 	return signature, nil
 }
 
-func (a Agents) Registered(signature string) (yes bool) {
+//201221 13:53 see ksess.rules.--AGENT--
+//it returns "" if r do not belong any registered agent.
+func (a Agents) Registered(r *http.Request) (signature string) {
 	agentsMutex.Lock()
-	if agents[signature] != nil {
-		yes = true
+	for k, v := range agents {
+		if v.RemoteAddress == r.RemoteAddr && v.UserAgent == r.UserAgent() {
+			signature = k
+			return
+		}
 	}
 	agentsMutex.Unlock()
-	return
-}
-
-func (a Agent) String() (res string) {
-	res = fmt.Sprintf("%v; RA=%v; UserId=%v; %v", a.RegTime.Format(startFormat), a.RemoteAddress, a.UserId, a.UserAgent)
 	return
 }
 
@@ -74,122 +94,30 @@ func (a Agents) String(lb string) (res string) {
 	return
 }
 
-func GetAgentsList(lb string) string {
-	return agents.String(lb)
+func GetAgents() Agents {
+	return agents
 }
 
-func (a Agents) addInfo(agentSignature string, b io.ReadCloser) (err error) {
-	if !a.Registered(agentSignature) {
-		err = fmt.Errorf("Agent %v not registered", agentSignature)
+//If an error occurs the checkAgent sends to client all necessary messages.
+//The returned result indicates whether or not to perform further on the incoming request: if error then not
+//201222 06:25
+func checkAgent(w http.ResponseWriter, r *http.Request) (err error) {
+	if sessCP.AgentPassword == "" {
 		return
 	}
-
-	if sessCP.NotAgentDebugging {
-		return
-	}
-
-	var f *os.File
-	var fFullName string
-	fFullName = sessCP.AgentFileDir + string(rune(os.PathSeparator)) + agentSignature
-	if f, err = os.OpenFile(fFullName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err != nil {
-		return
-	}
-	f.WriteString(time.Now().Format(startFormat) + " : ")
-	io.Copy(f, b)
-	f.WriteString("\n")
-	return
-}
-
-func postAgentErrorReportHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-	var agentSignature string
-	if sessCP.NotAgentDebugging {
-		w.WriteHeader(403)
-		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("/debug: debugging kot agent forbidden - sessCP.NotAgentDebugging==true"))
-		return
-	}
-	if agentSignature = strings.TrimSpace(r.Form.Get("AGENT_SIGNATURE")); agentSignature == "" {
-		if agentSignature, err = agents.Register(r); err != nil {
-			w.WriteHeader(403)
-			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-			w.Write([]byte("/debug: error: " + err.Error()))
-			return
-		}
-		w.WriteHeader(200)
+	kerr.PrintDebugMsg(false, "DFLAG201222_20:02", fmt.Sprintf(" checkAgent:%v--%v", r.FormValue(agentPasswordParName), sessCP.AgentPassword))
+	if r.FormValue(agentPasswordParName) != sessCP.AgentPassword {
+		err = fmt.Errorf("Not valid agent password")
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Write([]byte(agentSignature))
-		return
-	}
-
-	//Now we know that there is an agent signature and are going to add the info from request body to the file of this agent
-	if err = agents.addInfo(agentSignature, r.Body); err != nil {
 		w.WriteHeader(403)
+		w.Write([]byte(fmt.Sprintf("%v", err.Error())))
+		return
+	}
+	if _, err = agents.register(r); err != nil {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Write([]byte("/debug: error of adding info : " + err.Error()))
+		w.WriteHeader(403)
+		w.Write([]byte(fmt.Sprintf("%v", err.Error())))
 		return
-	}
-	w.WriteHeader(200)
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Write([]byte("Debugging info was successfully added to " + agentSignature))
-	return
-}
-
-//It creates or empties agents directory
-func setEmptyAgents() (err error) {
-	var files []string
-	var agentsDir string
-	var agentsDirStat os.FileInfo
-	if agentsDir, err = filepath.Abs(sessCP.AgentFileDir); err != nil {
-		return
-	}
-
-	//It checks the file if such is
-	//If it is not the function creats a directory
-	//If it is but no directiory the function returns erorr
-	if agentsDirStat, err = os.Stat(agentsDir); err != nil {
-		if os.IsNotExist(err) {
-			if err = os.Mkdir(agentsDir, 0777); err != nil {
-				return
-			}
-		} else {
-			return
-		}
-	} else {
-		if !agentsDirStat.IsDir() {
-			err = fmt.Errorf("File %v is exist but it is not directory", agentsDir)
-		}
-	}
-
-	//Now we are sure that the agents directory exists in a right place and we clean it not regard that it may be empty
-	if files, err = filepath.Glob(filepath.Join(agentsDir, "*")); err != nil {
-		return
-	}
-	for _, file := range files {
-		if err = os.RemoveAll(file); err != nil {
-			return
-		}
 	}
 	return
-} //setEmptyAgents
-
-func getAgentWorkerHandler(w http.ResponseWriter, r *http.Request) {
-	type pageData struct {
-		ControlPassword            string
-		KotURLForGetAgentSignature string
-	}
-
-	var data pageData
-	var page *template.Template
-	data.ControlPassword = sessCP.ControlPassword
-	data.KotURLForGetAgentSignature = fmt.Sprintf("/post_agent_error_report?CONTROL_PASSWORD=%s", sessCP.ControlPassword)
-
-	if page, err = template.ParseFiles(sessCP.AgentWorkerDir + "agentworker.js"); err != nil {
-
-	}
-
-	if err = page.Execute(w, data); err != nil {
-		//		kerr.SysErrPrintf(" indexHandler: err == %s", err.Error())
-	}
-
 }

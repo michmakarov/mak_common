@@ -10,6 +10,10 @@ _______14:16 I am going to overworking func logout(w http.ResponseWriter, r *htt
 _______14:43 Now doHijackedRequest
 _______16:38 index page (index.html)
 Goal: it should be a SPA for, at least, the login and the logout.
++++++++++++++++++++++++++++++++++++
+201221 05:48 Agent
+_______05:56 Agent Requests
+
 
 
 

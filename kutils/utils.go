@@ -188,9 +188,13 @@ func EraseNulls(str string) (res string) {
 
 }
 
-//if function with prefix "TrueRand" returns error it also returning a random value but from default seed
-func TrueRandInt() (string, error) {
-	return strconv.Itoa(rand.Int()), nil
+//201221 07:35
+func TrueRandInt() string {
+	var rnd = rand.Int()
+	if rnd == 0 {
+		return "zero"
+	}
+	return strconv.Itoa(rnd)
 }
 
 //if function with prefix "TrueRand" returns error it also returning a random value but from default seed

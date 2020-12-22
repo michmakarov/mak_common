@@ -1,6 +1,17 @@
-LOGGING
+Version=---No---
+--LOGGING--
 1. if a programer have not deny logging and there have been an error of creating it then GreateHub returns error.
 2. LogsDir (string) carry a directory where log files are being placed.
 It may be empty, in this case the files will be placed into the working directory.
 Othewise it must be ended by "/" or "\" in depending of the platform.
+--AGENT--
+See also rels.--AGENT--
+Two requests are considered to belogn the same agent when combination of the remote address and User-Agent http header is the same. 
+Absence or emptyness id the User-Agent header is considered as having the value of "".
+That is in that case agents may be different only because of its remote address.
+--HIJACKEDREQUST-- they are http requests which are intercought
+by the packet and are fulfilled if there are some conditions. If there are not
+the conditions those are leaved for the programer's handler. There are such requests:
+/ping /login /ws /logout
+
 

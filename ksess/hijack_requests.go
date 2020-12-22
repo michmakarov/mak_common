@@ -4,9 +4,13 @@
 package ksess
 
 import (
+	"encoding/json"
 	"fmt"
 	"mak_common/kerr"
 	"net/http"
+	"os"
+	"strings"
+	"time"
 )
 
 //201208 16:26 But how to be with the big principle?
@@ -47,7 +51,48 @@ func doHijackedRequest(w http.ResponseWriter, r *http.Request, cookData sessCook
 			//w.Write([]byte(fmt.Sprintf("(RegistrationThrouLogin==true)/logout may be requested by  registered user only")))
 			return true
 		}
+	case "/ping":
+		{
+			pingHandler(w, r)
+			return true //At any outcome this request will be performed.
+		}
 	} //switch
 
 	return false //it is for all requests not listed in the switch
+}
+
+//201222 16:53
+//if agents are not supported the request is not wrought (is leaved to the programmer's handler)
+//r.URL.Path == "/ping"
+func pingHandler(w http.ResponseWriter, r *http.Request) (performed bool) {
+	type PA struct {
+		PingTag      string
+		From         string
+		RequestCount int64
+		AnswerTime   string
+	}
+	var err error
+	var pa PA
+	var pingTag string
+	var answer []byte
+	if sessCP.AgentPassword == "" { //agents are not supported and the request is not wrought (is leaved to the programmer\'s handler)
+		performed = false
+		return
+	}
+
+	pingTag = strings.TrimSpace(r.FormValue("PING_TAG"))
+	if pingTag == "" {
+		pingTag = "no ping tag"
+	}
+	pa.PingTag = pingTag
+	if pa.From, err = os.Hostname(); err != nil {
+		pa.From = err.Error()
+	}
+	pa.AnswerTime = time.Now().Format(startFormat)
+	pa.RequestCount = flr.feelerCount
+	answer, _ = json.Marshal(pa)
+	w.Header().Set("Contenr-Type", "application/json; charset=utf-8")
+	w.Write(answer)
+	return
+
 }

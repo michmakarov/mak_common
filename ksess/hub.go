@@ -89,22 +89,31 @@ type SessConfigParams struct {
 
 	//-------------------------
 
+	//201222 08:17 At the moment there is only application: debug.PrintStack() when feeler catchs panic
 	Debug int // 0 - no debug at all
-	//---------- TLS params; if (CertFile!="") then ListenAndServeTLS is run
+	//-------------
+
+	//TLS params; if (CertFile!="") then ListenAndServeTLS is run
 	CertFile, KeyFile string
-	//------------- The Listening address; if "" then ":8080"
+	//---------------
+
+	//The Listening address; if "" then ":8080"
 	Listening_address string
+	//----------------
 
 	Admins []int //Administrators, default Admins={0}
-	//-----------------
-	//----------------- 181019
-	ControlPassword           string
-	RedirectOnNoAuthorisation string
+
+	//201222 06:53 -----------------
+	//if =="" agents not supporting
+	AgentPassword string //ControlPassword           string//201222 06:17 see agents.go checkAgent
 	//---------------------
-	//--------------------- 181102
-	NotAgentDebugging bool
-	AgentFileDir      string //by default it is in the working directory with name "agents"
-	AgentWorkerDir    string //by default it is "" - that it is working directory
+
+	RedirectOnNoAuthorisation string
+
+	//--------------------- 181102 201221 06:23
+	//201222 06:16 agentPassword is instead NoAgent bool // NotAgentDebugging bool
+	//AgentFileDir      string //by default it is in the working directory with name "agents"
+	//AgentWorkerDir    string //by default it is "" - that it is working directory
 	//---------------------
 	//--------------------- 181121_1
 	WithoutHTTPActivity int // minutes - How many minutes some session may exist without HTTP activity provided there is not WS connection
@@ -180,7 +189,7 @@ var ( //-m "190820(+2) Mending the problem of request counter"
 	// hub maintains the set of active clients
 
 	flr           *feeler
-	sessCP        *SessConfigParams
+	sessCP        *SessConfigParams //201221 07:20 Actual config params. set by CreateHub
 	server        *http.Server
 	ServerStopped chan struct{} = make(chan struct{})
 	serverStopped chan string   = make(chan string) //181024_1
