@@ -25,8 +25,9 @@ import (
 //181228_1
 func doHijackedRequest(w http.ResponseWriter, r *http.Request, cookData sessCookieData, c *sessClient) (yes bool) {
 	yes = true
-	kerr.PrintDebugMsg(false, "ws", fmt.Sprintf("doHijackedRequest HERE; cookData%v, c=%v", cookData, c))
-	//if cookData.UserID < 0 {
+
+	//kerr.PrintDebugMsg(false, "DFLAG201223_06:36", fmt.Sprintf("doHijackedRequest HERE; cookData%v, c=%v", cookData, c))
+
 	switch r.URL.Path {
 	case "/ws":
 		//serveWs(hub, w, r)
@@ -40,15 +41,11 @@ func doHijackedRequest(w http.ResponseWriter, r *http.Request, cookData sessCook
 			loginpost(w, r)
 			return true
 		}
-		//loginpost(w, r)
-		//return true
 	case "/logout":
 		if !sessCP.RegistrationThrouLogin {
 			return false
 		} else {
 			logout(w, r)
-			//w.WriteHeader(400)
-			//w.Write([]byte(fmt.Sprintf("(RegistrationThrouLogin==true)/logout may be requested by  registered user only")))
 			return true
 		}
 	case "/ping":
@@ -58,7 +55,7 @@ func doHijackedRequest(w http.ResponseWriter, r *http.Request, cookData sessCook
 		}
 	} //switch
 
-	return false //it is for all requests not listed in the switch
+	return false //201223 05:59 All requests not listed in the switch are not hijacking and must be handled accordingly common rules
 }
 
 //201222 16:53
@@ -75,6 +72,9 @@ func pingHandler(w http.ResponseWriter, r *http.Request) (performed bool) {
 	var pa PA
 	var pingTag string
 	var answer []byte
+
+	kerr.PrintDebugMsg(false, "DFLAG201223_06:36", fmt.Sprintf("pingHandler HERE;"))
+
 	if sessCP.AgentPassword == "" { //agents are not supported and the request is not wrought (is leaved to the programmer\'s handler)
 		performed = false
 		return
@@ -95,4 +95,19 @@ func pingHandler(w http.ResponseWriter, r *http.Request) (performed bool) {
 	w.Write(answer)
 	return
 
+}
+
+func isHijacked(r *http.Request) bool {
+	switch r.URL.Path {
+	case "/ws":
+		return true
+	case "/login":
+		return true
+	case "/logout":
+		return true
+	case "/ping":
+		return true
+	default:
+		return false
+	}
 }

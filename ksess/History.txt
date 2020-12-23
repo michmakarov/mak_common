@@ -17,6 +17,8 @@ _______05:56 Agent Requests
 201223 03:51 Yesterday: mending the feeler for hijack requests and agents.
 And now!!! What is the outsession requests; how and when to handle them?
 _______04:40 trying tgh.sh
+_______05:30 the tgh.sh as if works properly for the moment.
+_______18:55 Have the HIJACKED_REQUEST requests have the agent password. Obviously no.
 
 
 

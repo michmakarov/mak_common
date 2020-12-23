@@ -1,18 +1,33 @@
-Version=---3216254--*master--201223_0521---
+Version=---e52d2b1--*master--201223_2033---
+INTRODUCTION
+This file determines terms (with their definitions) that describ features of the ksess packet.
+The packet is a framework that offers some restriction for a http server. Namely they are:
+- realising --SYSTEM--
+- realising --SESSION--
+This assums terms of "http server", "http clinet" in their common mean.
+
 --LOGGING--
 1. if a programer have not deny logging and there have been an error of creating it then GreateHub returns error.
 2. LogsDir (string) carry a directory where log files are being placed.
 It may be empty, in this case the files will be placed into the working directory.
 Othewise it must be ended by "/" or "\" in depending of the platform.
 --AGENT--
-See also rels.--AGENT--
+A http server may be a part of a -SYSTEM-. In this case it may take http requests from a trusted http clients only, those are named as AGENT.
+ A common http client which is not a AGENT always will receive the status code 403 and only an AGENT can receive another code.
+That is the server can checks that this cliet was mandated by the SERVER to interact with it.
+It is necessary to understand that an AGENT is not a -USER-: many users can interact with the SYSTEM through an one AGENT.
 Two requests are considered to belogn the same agent when combination of the remote address and User-Agent http header is the same. 
-Absence or emptyness id the User-Agent header is considered as having the value of "".
+Absence or emptyness its User-Agent header is considered as having the value of "".
 That is in that case agents may be different only because of its remote address.
 --HIJACKED_REQUEST-- they are http requests which are intercought
-by the packet and are fulfilled if there are some conditions. If there are not
-the conditions those are leaved for the programer's handler. There are such requests:
+by the packet and are fulfilled. There are such requests:
 /ping /login /ws /logout
+Those requests are defined inside the packet and are performed internally notwithstanding any external conditions.
+But they themself may check those conditions and change their behavior.
+It is necessary to take attention that a programmer may make handlers for those requests, but will be that handlers invoked or no entirely depends on their internal realization. For example a programmer's "/ping" will never be invoked.
+The -HIJACKED_REQUEST- requests like -OUTSESSION_REQEST- requests have not to be sent by an -AGENT- to be performed.
 --OUTSESSION_REQEST-- It is a request which is passed to the programmer handler without checking any conditions.
+--SYSTEM--
+The system is unity of a http server and its special clients called AGENTs.
 
 

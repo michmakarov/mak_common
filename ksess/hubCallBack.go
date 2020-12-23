@@ -48,6 +48,7 @@ type ParserSocket func(user_id int, mess []byte) map[string]string
 
 //It examines a request URL's path to allow doing the request regardless  existing the session
 //see variable checkURLPath and parameter URLCheker of function CreateHub
+//201223 06:15 see also OUTSESSION_REQEST into feeler.go_(f *feeler) ServeHTTP
 type URLPathChecker func(path string) bool
 
 //It takes a result of  the ParserSocket and extracts from it the list of users to which the result must be sent

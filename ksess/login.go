@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	//"html/template"
 	"mak_common/kerr"
 	"mak_common/kutils"
 
@@ -40,7 +39,6 @@ func loginpost(w http.ResponseWriter, r *http.Request) {
 		initDataFormValue string
 		user_id           int
 		initData          interface{}
-		//panicCode         int = 500 //181228 400 or 500 For what cause is the panic?
 	)
 	var sendResult = func(code int, mess string) { //see 201209 06:48 note
 		mess = "Authorisation: " + mess
@@ -70,7 +68,8 @@ func loginpost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch r.Method {
-	case "POST":
+	case "POST", "GET":
+		kerr.PrintDebugMsg(false, "DFLAG201223_14:45", fmt.Sprintf("loginpost:M=%v contType=%v", r.Method, r.Header.Values("Content-Type")))
 		if err = r.ParseForm(); err != nil {
 			panic(errors.New(fmt.Sprintf("Error of r.ParseForm(): %v", err.Error())))
 		}
@@ -138,9 +137,10 @@ func loginpost(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	default:
-		kerr.SysErrPrintln("loginpost: Not POST methods")
+		//kerr.SysErrPrintln("loginpost: Allowed only POST and GET methods")
 		//panicCode = 400
-		panic(fmt.Sprintf("Only POST methods are allowed, not %v", r.Method))
+		//panic(fmt.Sprintf("Only POST methods are allowed, not %v", r.Method))
+		sendResult(400, fmt.Sprintf("Only POST methods are allowed, not %v", r.Method))
 	}
 
 }

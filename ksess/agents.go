@@ -34,6 +34,9 @@ type Agents map[string]*Agent
 
 //is registered
 var agents Agents = make(map[string]*Agent)
+
+//var registerMutex sync.Mutex
+//var registeredMutex sync.Mutex
 var agentsMutex sync.Mutex
 
 func (a *Agent) String() string {
@@ -78,6 +81,7 @@ func (a Agents) Registered(r *http.Request) (signature string) {
 	for k, v := range agents {
 		if v.RemoteAddress == r.RemoteAddr && v.UserAgent == r.UserAgent() {
 			signature = k
+			agentsMutex.Unlock()
 			return
 		}
 	}
@@ -87,8 +91,8 @@ func (a Agents) Registered(r *http.Request) (signature string) {
 
 func (a Agents) String(lb string) (res string) {
 	agentsMutex.Lock()
-	for key, value := range a {
-		res = res + key + "==" + value.String() + lb
+	for _, value := range a {
+		res = res + value.String() + lb
 	}
 	agentsMutex.Unlock()
 	return
@@ -98,14 +102,21 @@ func GetAgents() Agents {
 	return agents
 }
 
+// checkAgent does nothin  and returns nil if isOutSess==true or isHijacked(r)==true
 //If an error occurs the checkAgent sends to client all necessary messages.
 //The returned result indicates whether or not to perform further on the incoming request: if error then not
-//201222 06:25
-func checkAgent(w http.ResponseWriter, r *http.Request) (err error) {
+//201222 06:25; 201223 06:09
+func checkAgent(w http.ResponseWriter, r *http.Request, isOutSess bool) (err error) {
 	if sessCP.AgentPassword == "" {
 		return
 	}
-	kerr.PrintDebugMsg(false, "DFLAG201222_20:02", fmt.Sprintf(" checkAgent:%v--%v", r.FormValue(agentPasswordParName), sessCP.AgentPassword))
+	if isOutSess { //201223 06:09
+		return
+	}
+	if isHijacked(r) { //201223 20:10
+		return
+	}
+	kerr.PrintDebugMsg(false, "DFLAG201223_07:31", fmt.Sprintf(" checkAgent before checking pwd:Path=%v; err=%v", r.URL.Path, err))
 	if r.FormValue(agentPasswordParName) != sessCP.AgentPassword {
 		err = fmt.Errorf("Not valid agent password")
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -113,11 +124,13 @@ func checkAgent(w http.ResponseWriter, r *http.Request) (err error) {
 		w.Write([]byte(fmt.Sprintf("%v", err.Error())))
 		return
 	}
+	kerr.PrintDebugMsg(false, "DFLAG201223_07:31", fmt.Sprintf(" checkAgent before register:Path=%v; err=%v", r.URL.Path, err))
 	if _, err = agents.register(r); err != nil {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(403)
 		w.Write([]byte(fmt.Sprintf("%v", err.Error())))
 		return
 	}
+	kerr.PrintDebugMsg(false, "DFLAG201223_07:31", fmt.Sprintf(" checkAgent before return:Path=%v; err=%v", r.URL.Path, err))
 	return
 }

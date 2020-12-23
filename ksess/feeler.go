@@ -109,12 +109,13 @@ func createFeeler(h http.Handler) (f *feeler, err error) {
 
 func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var (
-		cookData      sessCookieData
-		c             *sessClient
-		cancel        context.CancelFunc
-		ctx           context.Context
-		err           error
-		requestCouter int64 //!!! 190820_2 The problem of requests counter
+		cookData          sessCookieData
+		c                 *sessClient
+		cancel            context.CancelFunc
+		ctx               context.Context
+		err               error
+		requestCouter     int64 //!!! 190820_2 The problem of requests counter
+		OUTSESSION_REQEST bool  //201223 05:45
 	)
 	defer func() {
 		var rec interface{}
@@ -143,8 +144,10 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	r.Method = strings.ToUpper(r.Method)
 
-	kerr.PrintDebugMsg(false, "DFLAG201222_20:02", fmt.Sprintf("feeler:(cnt=%v)%v--%v", requestCouter, r.URL.Query(), sessCP.AgentPassword))
-	if checkAgent(w, r) != nil { //Else the request has passed checking and may be performed.
+	OUTSESSION_REQEST = checkURLPath(r.URL.Path)
+	kerr.PrintDebugMsg(false, "DFLAG201223_06:36", fmt.Sprintf("feeler:(cnt=%v)Query=%v;Apswd=%v;outSes=%v", requestCouter, r.URL.Query(), sessCP.AgentPassword, OUTSESSION_REQEST))
+
+	if checkAgent(w, r, OUTSESSION_REQEST) != nil { //Else the request has passed checking and may be performed.
 		return
 	}
 
@@ -180,7 +183,7 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if cookData.UserID > -1 {
 			WriteToLog("accepted") //pass to calcHTTPResponse
 		} else {
-			if !checkURLPath(r.URL.Path) {
+			if !OUTSESSION_REQEST {
 				WriteToLog("refused")
 				if sessCP.RedirectOnNoAuthorisation == "" { //181019
 					w.WriteHeader(401)
