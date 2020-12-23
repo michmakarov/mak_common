@@ -13,6 +13,10 @@ Goal: it should be a SPA for, at least, the login and the logout.
 +++++++++++++++++++++++++++++++++++
 201221 05:48 Agent
 _______05:56 Agent Requests
+++++++++++++++++++++++++++++++++++
+201223 03:51 Yesterday: mending the feeler for hijack requests and agents.
+And now!!! What is the outsession requests; how and when to handle them?
+_______04:40 trying tgh.sh
 
 
 
