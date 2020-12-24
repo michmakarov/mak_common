@@ -13,27 +13,18 @@ import (
 	//"time"
 )
 
-//201209 06:48 The loginpost itself finishes (completes) a request.
-//In other words, it SHOULD be the last chain link in working the request.
-//What is here the matter? It is an old question : Is it good to give a result through a panic?
-//Let's answer NO. It is better to keep flyes and cutlets apart.
-//As the consequence: if there is a panic then a returning code is 500 and no else
-//If there is not a panic then the sendResult workes.
-//_____
-/* removed since 180813 until 181229
- */
-//181128_developing What does this function presume?
-//(1) user_id <0; That is this function is allowed to call only if the request is come from not registered user.
-// But what will be if it is not so?
-//Some strange behaviour may be. For example, the server may say "bad password" although a registration was already done
-//181128_developing (181231 ) What does this function admit
-//(2) For Request (r). It must be "POST" and have Content-Type of application/x-www-form-urlencoded
-// The last, as it seems, really is necessary if you want to pass an initial data for otherwise thiis data is be regarded absent in the request
+//
+
+//201224 12:10
+//Here as if is the only place where checkUserCredentailsEnv is invoked
+var reservedUserIDs = []int{-1, -2, -11, -21}
+
 func loginpost(w http.ResponseWriter, r *http.Request) {
 	var (
 		cookData          sessCookieData
 		err               error
 		errMess           string
+		actionFormValue   string
 		loginFormValue    string
 		passFormValue     string
 		initDataFormValue string
@@ -69,10 +60,11 @@ func loginpost(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "POST", "GET":
-		kerr.PrintDebugMsg(false, "DFLAG201223_14:45", fmt.Sprintf("loginpost:M=%v contType=%v", r.Method, r.Header.Values("Content-Type")))
+		//kerr.PrintDebugMsg(false, "DFLAG201223_14:45", fmt.Sprintf("loginpost:M=%v contType=%v", r.Method, r.Header.Values("Content-Type")))
 		if err = r.ParseForm(); err != nil {
 			panic(errors.New(fmt.Sprintf("Error of r.ParseForm(): %v", err.Error())))
 		}
+		actionFormValue = r.FormValue("action")
 		loginFormValue = r.FormValue("login")
 		if loginFormValue == "" {
 			sendResult(400, fmt.Sprint("not \"login\" field "))
@@ -86,9 +78,13 @@ func loginpost(w http.ResponseWriter, r *http.Request) {
 
 		initDataFormValue = r.FormValue("initData")
 
-		user_id, errMess = checkUserCredentails(loginFormValue, passFormValue)
+		user_id, errMess = checkUserCredentailsEnv(actionFormValue, loginFormValue, passFormValue)
 
-		if user_id > -1 { //Success of checking credentials
+		if errMess == "" { //Success of checking credentials
+			if isInInts(user_id, reservedUserIDs) {
+				sendResult(400, fmt.Sprint("ID %v (user = %v) is reserved and not allowed for using", user_id, loginFormValue))
+				return
+			}
 			if hub.userRegistered(user_id) {
 				sendResult(400, fmt.Sprint("user %v (id = %v) has already registered", loginFormValue, user_id))
 				return
@@ -122,25 +118,18 @@ func loginpost(w http.ResponseWriter, r *http.Request) {
 
 			http.Redirect(w, r, sessCP.IndURL, 302)
 
-		} else { //user_id<0
-			if errMess == "" {
-				errMess = "checkUserCredentails: Во дела! user_id<0, а сообщение об ошибке пусто"
-				kerr.SysErrPrintln(errMess)
-			}
+		} else { //errMess != ""
 			if sessCP.OnFaultRegictrationRedirectTo != "" {
 				setLogErrCookie(w, errMess)
 				//http.Redirect(w, r, sessCP.LoginURL, 302)
 				http.Redirect(w, r, sessCP.OnFaultRegictrationRedirectTo, 302)
 			} else {
-				sendResult(400, fmt.Sprintf("user %v is not exist (checking credentials is fault)", loginFormValue))
+				sendResult(400, fmt.Sprintf("checking credentials of user %v is fault with message %v", loginFormValue, errMess))
 				return
 			}
 		}
 	default:
-		//kerr.SysErrPrintln("loginpost: Allowed only POST and GET methods")
-		//panicCode = 400
-		//panic(fmt.Sprintf("Only POST methods are allowed, not %v", r.Method))
-		sendResult(400, fmt.Sprintf("Only POST methods are allowed, not %v", r.Method))
+		sendResult(400, fmt.Sprintf("Only POST or GET methods are allowed, not %v", r.Method))
 	}
 
 }

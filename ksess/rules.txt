@@ -1,4 +1,4 @@
-Version=---e52d2b1--*master--201223_2033---
+Version=---eda50c6--*master--201224_1457---
 INTRODUCTION
 This file determines terms (with their definitions) that describ features of the ksess packet.
 The packet is a framework that offers some restriction for a http server. Namely they are:
@@ -29,5 +29,7 @@ The -HIJACKED_REQUEST- requests like -OUTSESSION_REQEST- requests have not to be
 --OUTSESSION_REQEST-- It is a request which is passed to the programmer handler without checking any conditions.
 --SYSTEM--
 The system is unity of a http server and its special clients called AGENTs.
+--CALLBACK--
+Those are functions what wrote by a -PROGRAMER- and is passed by him into the packet for execution. All such function are invoked through envelope function which intercepts panics and interrupts execution after elapsing the timeout. See api.-CallBakTimeout-
 
 

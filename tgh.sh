@@ -46,6 +46,7 @@ echo ------------------------------------
 
 {
 sed -i "s/---.*---/---$git_commit_1---/" ksess/rules.txt
+sed -i "s/---.*---/---$git_commit_1---/" ksess/api.txt
 }
 
 

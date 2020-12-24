@@ -26,9 +26,8 @@ import (
 
 	"mak_common/kerr"
 	"mak_common/kutils"
-
 	//"github.com/gorilla/mux"
-	_ "github.com/mattn/go-sqlite3"
+	//_ "github.com/mattn/go-sqlite3"
 )
 
 //The type sessHub and its pointer methods are privite
@@ -136,6 +135,10 @@ type SessConfigParams struct {
 	//-----------------------191223
 	HurryForbidden bool
 	//---------------------
+	//201224 06:01 -----------------
+	//Milliseconds of waiting a result from callback functions. Not less then 500
+	CallBakTimeout int
+	//------------------------------
 }
 
 /*

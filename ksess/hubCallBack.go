@@ -55,9 +55,8 @@ type URLPathChecker func(path string) bool
 //If no such function given then the extractUsersDefault is used
 type ExtractUsers func(answer map[string]string) (users []int)
 
-//Checking was successful when retuning user_id >=0
-//If user-id<0 in errMess it returns a error message, for example "user <userLogName> does not exist"
-type CheckUserCredentails func(userLogName, userPassword string) (user_id int, errMess string)
+//see api.txt
+type CheckUserCredentails func(action, userLogName, userPassword string) (user_id int, errMess string)
 
 type GetInitData func(user_id int) (data interface{}, err error)
 
@@ -136,6 +135,9 @@ func CreateHub(ps ParserSocket, //1 not nill
 
 	//scp------
 
+	if scp.CallBakTimeout < 500 {
+		scp.CallBakTimeout = 500
+	}
 	if scp.LogsDir != "" {
 		if err = checkLogsDir(scp.LogsDir); err != nil {
 			err = fmt.Errorf("CreateHub: LogsDir err=%v", err.Error())

@@ -19,6 +19,14 @@ And now!!! What is the outsession requests; how and when to handle them?
 _______04:40 trying tgh.sh
 _______05:30 the tgh.sh as if works properly for the moment.
 _______18:55 Have the HIJACKED_REQUEST requests have the agent password. Obviously no.
++++++++++++++++++++++++++++++++++++
+201224 04:05 It is need to rethink and rewrite the type CheckUserCredentails and the request /login
+_______04:58 How to intercept a fault of calling callback function?
+As if in such action  in general there is little sense as a programer may have made there an infinite loop.
+_______13:17 Nonsense! All callbacks must be invoked through envelope functions.
+_______14:49
+./tgh.sh "done: /login (func loginpost) and func checkUserCredentailsEnv"
+
 
 
 

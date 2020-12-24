@@ -1,0 +1,19 @@
+Version=---eda50c6--*master--201224_1457---
+INTRODUCTION
+Here definitions of the packet ksees  API are given.
+Definitions may be next kinds:
+intercepted request (see rules.-HIJACKED_REQUEST-)
+types (including callback functions)
+functions
+confuguration parameters
+
+--login--
+It is a request (/login) that is intercepted when the config parameter -RegistrationThrouLogin- is true
+--CheckUserCredentails--
+It is a callback function: type CheckUserCredentails func(action, userLogName, userPassword string) (user_id int, errMess string)
+It calculates incoming parameters into user_id. If the calculation was fault it returns errMess!="".
+--CallBakTimeout-- It is configuration parameter which define timeout for performing callback function (see rules.-CALLBACK-). That is after its elapsing execution of a callback function will be ended. It is amount of millisekont and  not less than 500.
+
+
+
+
