@@ -1,7 +1,16 @@
 #!/bin/bash
 echo it is sv.sh: that is setting version of makcommon library
 
-version="+++da21c61--*main--201225_0801+++"
+areChanges=$(git status -s)
+if [ $areChanges == "" ]; then {
+echo "There are no changes in the mak_common library"
+echo sv.sh ended its work ------------------------------------------------------
+}
+fi
+
+
+
+version="+++da21c61--*main--201225_1532+++"
 fix=+++
 version=$(echo "$version" | sed -e "s/^$fix//" -e "s/$fix$//")
 echo version=$version
@@ -31,6 +40,8 @@ echo $1
 #201223 05:15 does not roll
 #exit
 
+
+
 git add .
 echo passed git add . 
 
@@ -40,7 +51,7 @@ echo git commit -m "$1"
 
 git push
 
-echo sv.sh: successfully ended ------------------------------------------------------
+echo sv.sh: successfully ended with changes pushed------------------------------------------------------
 
 
 
