@@ -8,4 +8,12 @@ Answer: when combination of the remote address and User-Agent http header is the
 201222 05:48 SessConfigParams
 agentPassword (former ControlPassword) is instead of NoAgent
 _______16:17 Fourth param of CreateHub (mx) - it must be of type http.Handler.
+++++++++++++++++++++++++++++++++++++++
+201225 04:41
+Yesterday a question arose: what is a library (or a packet) version. As the answer see mak_common/sv.sh
+_______07:07
+echo $(echo 1234567 | cut -c 2-6)
+echo "$string" | sed -e "s/^$prefix//" -e "s/$suffix$//"
+_______08:26 Not to push if there are not changes. But how to know?
+git commit -m "Not to push if there are not changes. But how to know?"
 

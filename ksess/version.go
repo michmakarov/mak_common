@@ -3,6 +3,10 @@
 //Now I answer: no. The user manual is distinct project that may reference to a version but must not give its description.
 //So, since now I am abandoning to support files with description of a version (.dot) and returning to the old idea of having a special code file (version.go) for this purpose
 //191002 I confirm it
+//201225 04:41 Let's to agree it for the present time. In it are sober thoufhts:
+//a commit only fixes some state and says about the past
+//But what is now? In what is our will?
+//Yesterday a question arose: what is a library (or a packet) version. As the answer see mak_common/sv.sh
 package ksess
 
 import (
@@ -11,32 +15,38 @@ import (
 )
 
 //191002 That is the first question that emerged from weak ability to foresee - how to get this?
-var commit_data_1 = "No_data"
+//201224 15:14 the tgh.sh does it.
+var commit_data_1 = "---da21c61--*main--201225_0801---"
 
 //VersionDescr binds a version number with the version description
 type VersionDescr struct {
-	Number       string //Version number is a string of format "190926", that is "<Year><Month><Day>"
-	ProgName     string //   = "ksodd"
-	GitBranch    string // "pgf_with_ksess"
-	Git_commit   string
-	IlnVer       string //This is similar to Number but shows a date of pulling codes those generated not dependly by some developers which do not see needs of versioning
-	VersionState string //= "developing"
-	Text         string
+	Number             string //Version number is a string of format "190926", that is "<Year><Month><Day>"
+	ProgName           string //   = "makcommon.ksess"
+	Commit_branch_time string // The time is last time of launch the tgh.sh
+	VersionState       string //= "developing" How to do that it be filled automaticlly?
+	Text               string
 }
 
 //versinList defines VersionDescr for each version that has been occured
 //Current version has index 0, previous one - index 1, and so on.
 var versionList = []VersionDescr{
-	{"191223", "KSESS", "No git", commit_data_1, "?????", "closed 191224 12_18", blabla_191223},
-	{"191002", "KSESS", "No git", commit_data_1, "190926", "developing", blabla_191002},
+	{"201223", "makcommon.ksess", commit_data_1, "developing", blabla_201224},
+	{"191223", "KSESS", commit_data_1, "closed 191224 12_18", blabla_191223},
+	{"191002", "KSESS", commit_data_1, "developing", blabla_191002},
 }
 
-// For backward compatibility and getting current version
-func GetVesionInfo() string {
+func GetCurrVerInfo() string {
 	return GetVerInfo(versionList[0].Number)
 }
 
 //Sequence such constant define textual description of a version.
+
+const blabla_201224 = `
+Plan:<br>
+To get goods that is enough for the rels project
+Результаты <br>
+Предложение к следующей версии<br>
+`
 
 const blabla_191223 = `
 I alresdy do not know what was doing as well was done in previous version.
@@ -62,8 +72,7 @@ const blabla_191002 = `
 func GetVerInfo(num string) string {
 	for _, it := range versionList {
 		if it.Number == num {
-			it.Git_commit = commit_data_1
-			return it.ProgName + "_" + it.GitBranch + "_" + it.Number + " : " + it.VersionState + "; commit_date=" + it.Git_commit
+			return it.ProgName + "_" + it.Number + " : " + it.VersionState + ";" + it.Commit_branch_time
 		}
 	}
 	return fmt.Sprintf("getVerInfo:No such version - %v", num)
