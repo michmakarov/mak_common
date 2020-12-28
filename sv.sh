@@ -11,8 +11,8 @@ echo it is sv.sh: that is setting version of makcommon library
 
 goOutOnError(){
 	local operName=$1
-	if [ $operName="" ]; then {
-		operName="unknown operetion"
+	if [ $operName = "" ]; then {
+		operName="unknown operation"
 	} fi
 
 	if [ $? != 0 ]; then {
