@@ -1,4 +1,4 @@
-Version=---da21c61--*main--201225_1532---
+Version=---201216_rels:da21c61--*main--201228_1406---
 INTRODUCTION
 Here definitions of the packet ksees  API are given.
 Definitions may be next kinds:

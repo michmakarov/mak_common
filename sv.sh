@@ -1,27 +1,47 @@
 #!/bin/bash
 echo it is sv.sh: that is setting version of makcommon library
 
+#201228 12:37
+#The idea: 
+#A version of a library is the version of a project that modified the library last time.
+#For achieving that this script must be invoked by a script that builds the project - len's it is named project script.
+#The project script must pass the project version to here as first parameter.
+
+#The project script must take care to change the working directory before invoking this script
+
+goOutOnError(){
+	local operName=$1
+	if [ $operName="" ]; then {
+		operName="unknown operetion"
+	} fi
+
+	if [ $? != 0 ]; then {
+		echo "Error of executing $operName";
+		exit
+	} else { echo "--- $operName perfomed"; }
+	fi
+}
+
+
 areChanges=$(git status -s)
-if [ $areChanges == "" ]; then {
+if [ $areChanges = "" ]; then {
 echo "There are no changes in the mak_common library"
-echo sv.sh ended its work ------------------------------------------------------
+echo "v.sh ended its work ------------------------------------------------------"
+}
+fi
+
+version=$1
+if [ $version = "" ]; then {
+echo "There are no version was passed to here"
+echo "v.sh ended its work ------------------------------------------------------"
 }
 fi
 
 
-
-version="+++da21c61--*main--201225_1532+++"
-fix=+++
-version=$(echo "$version" | sed -e "s/^$fix//" -e "s/$fix$//")
+#version="+++da21c61--*main--201225_1532+++"
+#fix=+++
+#version=$(echo "$version" | sed -e "s/^$fix//" -e "s/$fix$//")
 echo version=$version
-#It is assuming that this variable is set into version of a host project and have format ---da21c61--*main--201225_0612---
-#where
-#A host project is that project which used the library
-#PN is the host project name, e.g. 201216_rels
-#VER is the host project version, e.g. da21c61--*main--201224_1311
-
-#Also it is assuming that this script will be run 
-#exit
 
 
 
@@ -30,26 +50,26 @@ echo version=$version
 
 {
 sed -i "s/---.*---/---$version---/" ksess/rules.txt
+goOutOnError "sed ksess/rules.txt"
+
 sed -i "s/---.*---/---$version---/" ksess/api.txt
+goOutOnError "sed ksess/api.txt"
+
 sed -i "s/---.*---/---$version---/" ksess/version.go
+goOutOnError "sed ksess/version.go"
 }
 
-
-echo $1
-#exit
-#201223 05:15 does not roll
-#exit
 
 
 
 git add .
-echo passed git add . 
+goOutOnError "git add ."
 
-git commit -m "$1"
-echo git commit -m "$1"
-
+git commit -m "$version"
+goOutOnError "git commit"
 
 git push
+goOutOnError "git push"
 
 echo sv.sh: successfully ended with changes pushed------------------------------------------------------
 
