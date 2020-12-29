@@ -12,7 +12,7 @@ echo it is sv.sh: that is setting version of makcommon library
 goOutOnError(){
 	local lastRetCode=$?
 	local operName="$1"
-	if [ $operName = "" ]; then {
+	if [ -z $operName ]; then {
 		operName="unknown operation"
 	}
 	fi
@@ -26,14 +26,14 @@ goOutOnError(){
 
 
 areChanges=$(git status -s)
-if [ $areChanges = "" ]; then {
+if [ -z $areChanges  ]; then {
 echo "There are no changes in the mak_common library"
 echo "v.sh ended its work ------------------------------------------------------"
 }
 fi
 
 version=$1
-if [ $version = "" ]; then {
+if [ -z $version ]; then {
 echo "There are no version was passed to here"
 echo "v.sh ended its work ------------------------------------------------------"
 }
