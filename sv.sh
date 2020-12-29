@@ -29,7 +29,8 @@ areChanges=$(git status -s)
 if [ -z "$areChanges"  ]; then {
 echo "There are no changes in the mak_common library"
 echo "v.sh ended its work ------------------------------------------------------"
-}
+exit
+} 
 fi
 
 version=$1
