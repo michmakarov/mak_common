@@ -17,4 +17,6 @@ echo "$string" | sed -e "s/^$prefix//" -e "s/$suffix$//"
 _______08:26 Not to push if there are not changes. But how to know?
 git commit -m "Not to push if there are not changes. But how to know?"
 _______08:35 $(git status -s) is empty
-
++++++++++++++++++++++++++++++++++++++++++++
+201229 04:27 As if some general approach to versioning has been formed. What has document be developed and where would it be stored?
+And else. What is about a version state: is it developing or no.

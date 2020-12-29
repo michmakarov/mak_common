@@ -10,13 +10,15 @@ echo it is sv.sh: that is setting version of makcommon library
 #The project script must take care to change the working directory before invoking this script
 
 goOutOnError(){
-	local operName=$1
+	local lastRetCode=$?
+	local operName="$1"
 	if [ $operName = "" ]; then {
 		operName="unknown operation"
-	} fi
+	}
+	fi
 
-	if [ $? != 0 ]; then {
-		echo "Error of executing $operName";
+	if [ $lastRetCode != 0 ]; then {
+		echo "Error of executing $operName(retCode:$lastRetCode)";
 		exit
 	} else { echo "--- $operName perfomed"; }
 	fi
