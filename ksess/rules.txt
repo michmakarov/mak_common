@@ -1,4 +1,4 @@
-Version=---201216_rels:da21c61--*main--201229_0653---
+Version=---201216_rels:da21c61--*main--201229_0659---
 INTRODUCTION
 This file determines terms (with their definitions) that describ features of the ksess packet.
 The packet is a framework that offers some restriction for a http server. Namely they are:
