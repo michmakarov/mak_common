@@ -124,7 +124,7 @@ func loginpost(w http.ResponseWriter, r *http.Request) {
 				//http.Redirect(w, r, sessCP.LoginURL, 302)
 				http.Redirect(w, r, sessCP.OnFaultRegictrationRedirectTo, 302)
 			} else {
-				sendResult(400, fmt.Sprintf("checking credentials of user %v is fault with message %v", loginFormValue, errMess))
+				sendResult(200, fmt.Sprintf("checking credentials of user %v is fault with message %v", loginFormValue, errMess))
 				return
 			}
 		}
