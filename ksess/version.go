@@ -16,7 +16,7 @@ import (
 
 //191002 That is the first question that emerged from weak ability to foresee - how to get this?
 //201224 15:14 the tgh.sh does it.
-var commit_data_1 = "---201216_rels:da21c61--*main--201230_0643---"
+var commit_data_1 = "---201216_rels:da21c61--*main--201230_0720---"
 
 //VersionDescr binds a version number with the version description
 type VersionDescr struct {

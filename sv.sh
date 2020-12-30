@@ -34,7 +34,8 @@ exit
 fi
 
 version=$1
-if [ -z $version ]; then {
+toGit=$2
+if [ -z "$version" ]; then {
 echo "There are no version was passed to here"
 echo "v.sh ended its work ------------------------------------------------------"
 }
@@ -61,6 +62,15 @@ goOutOnError "sed ksess/api.txt"
 sed -i "s/---.*---/---$version---/" ksess/version.go
 goOutOnError "sed ksess/version.go"
 }
+
+
+if [ -z "$toGit" ]; then {
+echo "There are no demand to git"
+echo "v.sh ended its work ------------------------------------------------------"
+exit
+}
+fi
+
 
 
 
