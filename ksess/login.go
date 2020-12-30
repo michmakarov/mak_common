@@ -34,7 +34,7 @@ func loginpost(w http.ResponseWriter, r *http.Request) {
 	var sendResult = func(code int, mess string) { //see 201209 06:48 note
 		mess = "Authorisation: " + mess
 		w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(code)
+		w.WriteHeader(200)
 		w.Write([]byte(mess))
 	}
 
@@ -124,7 +124,7 @@ func loginpost(w http.ResponseWriter, r *http.Request) {
 				//http.Redirect(w, r, sessCP.LoginURL, 302)
 				http.Redirect(w, r, sessCP.OnFaultRegictrationRedirectTo, 302)
 			} else {
-				sendResult(200, fmt.Sprintf("checking credentials of user %v is fault with message %v", loginFormValue, errMess))
+				sendResult(400, fmt.Sprintf("checking credentials of user %v is fault with message %v", loginFormValue, errMess))
 				return
 			}
 		}
