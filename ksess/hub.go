@@ -88,8 +88,12 @@ type SessConfigParams struct {
 
 	//-------------------------
 
+	//210101 This is set of bit flags
 	//201222 08:17 At the moment there is only application: debug.PrintStack() when feeler catchs panic
-	Debug int // 0 - no debug at all
+	Debug byte //210104 13:31 it affects through feelerLogger.mode (see func createFlrLog) on
+	//(1) (f *feeler) ServeHTTP defer func() - if 00000000 then not printing the stack when there is a panic
+	//(2) behavior of (fl *feelerLogger) getFlrlogMess - see this metod
+	//(3) doubling a requestRecord to StdOut (see func (fl *feelerLogger) Run)
 	//-------------
 
 	//TLS params; if (CertFile!="") then ListenAndServeTLS is run

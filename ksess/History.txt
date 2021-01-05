@@ -26,6 +26,15 @@ As if in such action  in general there is little sense as a programer may have m
 _______13:17 Nonsense! All callbacks must be invoked through envelope functions.
 _______14:49
 ./tgh.sh "done: /login (func loginpost) and func checkUserCredentailsEnv"
+++++++++++++++++++++++++++++++++++
+201230 14:25 --CheckUserCredentails-- (see api.txt) For what is the "action" parameter need?
+The old programmer truth: if you define thing you should explain for what it is needed. It may be that you have defined it because of a silly hurry.
+When I have been creating the parameter a dim thought was being before me: how to register a new user! The fool gives birth to a foolishness!
+For this is more better and simpler to expand the ksess and to to define a new hijaked request.
+++++++++++++++++++++++++++++++++++++
+210101 07:56 It is from the rels, of cause. From there it arises that it is not enough info the front logging gives. But, in the same time, now reports of the front logging are bulky and cumbersome.
+_______08:20 The idea is: to expand SessConfigParams.Debug with additional values to make capabilities of the front logging more flexible.
+
 
 
 

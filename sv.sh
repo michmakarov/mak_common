@@ -4,10 +4,13 @@ echo it is sv.sh: that is setting version of makcommon library
 #201228 12:37
 #The idea: 
 #A version of a library is the version of a project that modified the library last time.
-#For achieving that this script must be invoked by a script that builds the project - len's it is named project script.
+#For achieving that this script must be invoked by a script that builds the project - let's it is named project script.
 #The project script must pass the project version to here as first parameter.
 
 #The project script must take care to change the working directory before invoking this script
+
+#201230 08:12 In pursuing the xhrboo second parameter was allowed - toGit
+# if it passed changes will be writen to the git
 
 goOutOnError(){
 	local lastRetCode=$?
@@ -61,6 +64,10 @@ goOutOnError "sed ksess/api.txt"
 
 sed -i "s/---.*---/---$version---/" ksess/version.go
 goOutOnError "sed ksess/version.go"
+
+#210105 05:27
+sed -i "s/---.*---/---$version---/" kconfig/config.go
+goOutOnError "sed ksess/version.go"
 }
 
 
@@ -78,7 +85,7 @@ fi
 git add .
 goOutOnError "git add ."
 
-git commit -m "$version"
+git commit -m "$version:$toGit"
 goOutOnError "git commit"
 
 git push

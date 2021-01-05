@@ -75,3 +75,30 @@ func isInInts(i int, ints []int) bool {
 	}
 	return false
 }
+
+//210101 for func (fl *feelerLogger) getFlrlogMess
+func byteSet(value byte, byteNum int) bool {
+	var mask byte
+	if byteNum < 1 || byteNum > 7 {
+		panic(fmt.Sprintf("byteSet: illegal byte number=%v", byteNum))
+	}
+	switch byteNum {
+	case 1:
+		mask = 0b00000001
+	case 2:
+		mask = 0b00000010
+	case 3:
+		mask = 0b00000100
+	case 4:
+		mask = 0b00001000
+	case 5:
+		mask = 0b00010000
+	case 6:
+		mask = 0b00100000
+	case 7:
+		mask = 0b01000000
+	case 8:
+		mask = 0b10000000
+	}
+	return (value & mask) != 0
+}

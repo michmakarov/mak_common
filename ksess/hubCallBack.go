@@ -28,11 +28,15 @@ type ConnStateDescr struct {
 
 var currConnStateDescr *ConnStateDescr = &ConnStateDescr{nil, ""}
 
+//210101 if sessCP.Debug!=2 it does nothing
 func connStateHook(conn net.Conn, state http.ConnState) {
+	if !byteSet(byte(sessCP.Debug), 2) {
+		return
+	}
 	if currConnStateDescr.conn != conn {
 		currConnStateDescr = &ConnStateDescr{
-			conn:  conn,
-			descr: "",
+			conn: conn,
+			//descr: "",
 		}
 
 	}
@@ -184,15 +188,6 @@ func CreateHub(ps ParserSocket, //1 not nill
 		scp.Admins = []int{0}
 	}
 
-	//201222 06:47 agentPassword is instead;
-	//if scp.ControlPassword == "" { //181024_2 //201221 07:44 Let's it be
-	//	scp.ControlPassword = kutils.TrueRandInt()
-	//}
-
-	//if scp.AgentFileDir == "" { //181102 /201221 06:38
-	//	scp.AgentFileDir = "agents"
-	//}
-
 	if scp.WithoutHTTPActivity > 0 {
 		if scp.WithoutHTTPActivity < 15 { //181121_1
 			scp.WithoutHTTPActivity = 15
@@ -210,6 +205,8 @@ func CreateHub(ps ParserSocket, //1 not nill
 
 	sessCP = &SessConfigParams{}
 	*sessCP = *scp //setting the global (in the packet) variable
+	kerr.PrintDebugMsg(false, "DFLAG210102", fmt.Sprintf("CreateHub:scp.Debug=%v", scp.Debug))
+	kerr.PrintDebugMsg(false, "DFLAG210102", fmt.Sprintf("CreateHub:sessCP.Debug=%v", sessCP.Debug))
 	//-------scp
 
 	//201204 07:58
@@ -231,19 +228,11 @@ func CreateHub(ps ParserSocket, //1 not nill
 		return
 	}
 
-	kerr.PrintDebugMsg(false, "DFLAG201204_0638", fmt.Sprintf("CreateHub: before if err = createUsersLog()"))
 	if err = createUsersLog(); err != nil { //see rules LOGGING
 		sessCP = nil
 		err = errors.New(fmt.Sprintf("CreateHub: failure of creating users log with err: %v", err.Error()))
 		return
 	}
-	kerr.PrintDebugMsg(false, "DFLAG201204_0638", fmt.Sprintf("CreateHub: after if err = createUsersLog()"))
-
-	//reqMultiplexer.HandleFunc("/login", loginHandler)
-	//reqMultiplexer.HandleFunc("/logout", logoutHandler)
-	//reqMultiplexer.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-	//	serveWs(hub, w, r)
-	//})
 
 	server = &http.Server{
 		ConnState:      connStateHook,

@@ -34,7 +34,7 @@ func loginpost(w http.ResponseWriter, r *http.Request) {
 	var sendResult = func(code int, mess string) { //see 201209 06:48 note
 		mess = "Authorisation: " + mess
 		w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(200)
+		w.WriteHeader(code)
 		w.Write([]byte(mess))
 	}
 
@@ -70,7 +70,7 @@ func loginpost(w http.ResponseWriter, r *http.Request) {
 			sendResult(400, fmt.Sprint("not \"login\" field "))
 			return
 		}
-		passFormValue = r.FormValue("pass")
+		passFormValue = r.FormValue("password")
 		if passFormValue == "" {
 			sendResult(400, fmt.Sprint("not \"password\" field "))
 			return

@@ -20,3 +20,14 @@ _______08:35 $(git status -s) is empty
 +++++++++++++++++++++++++++++++++++++++++++
 201229 04:27 As if some general approach to versioning has been formed. What has document be developed and where would it be stored?
 And else. What is about a version state: is it developing or no.
++++++++++++++++++++++++++++++++++++++++++++
+210104 06:46
+A problem with kconfig packet (func (c Configuration) GetAsInt)
++++++++++++++++++++++++++++++++++++++++++++
+210105 04:37 There was not any problem with the kconfig packet. It was the next foolishness.
+An issue of library versioning is still dim, it is yet not ripe aptly.
+______05:25 The kconfig has been included in the library versioning (in its actual state) very slick (in my opinion).
+
+
+
+

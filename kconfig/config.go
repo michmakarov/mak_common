@@ -25,15 +25,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"mak_common/klog"
 	"os"
+	"strconv"
 )
 
 const (
 	ProgName     = "kconfig"
-	Version      = "190612" //"181003" //"180823"
+	Version      = "---201216_rels:da21c61--*main--210105_0553---" //"190612" //"181003" //"180823"
 	VersionState = "developing"
 )
+
+func init() {
+	fmt.Println(GetVesionInfo())
+}
 
 func GetVesionInfo() string {
 	return ProgName + "_" + Version + " : " + VersionState
@@ -130,6 +136,9 @@ func (c Configuration) GetAsInt(key string) (value int, err error) {
 	var ok bool
 	var valueFloat float64
 
+	//210104 07:02 How might such nonsense be occured?
+	//It is not nonsense at all! 210104 07:45
+
 	val = c[key]
 	//fmt.Printf("--M--val==%v;key==%v\n", val, key)
 	if valueFloat, ok = val.(float64); !ok {
@@ -138,6 +147,33 @@ func (c Configuration) GetAsInt(key string) (value int, err error) {
 		value = int(valueFloat)
 	}
 	return
+}
+
+//210104 07:45 the initial value must be in form of "XXXXXXXX" (eight or less symbols), where X is 1 or 0
+func (c Configuration) GetAsByte(key string) (value byte, err error) {
+	var val interface{}
+	var valStr string
+	var valUint64 uint64
+	var ok bool
+
+	val = c[key]
+	if valStr, ok = val.(string); !ok {
+		err = fmt.Errorf("kconfig.GetAsByte: %v of %v does not hold a string", val, key)
+		return
+	}
+	if len(valStr) > 8 {
+		err = fmt.Errorf("kconfig.GetAsByte: %v of %v holds more than 8 symbols and cannot rendered as byte", val, key)
+		return
+	}
+	if len(valStr) == 0 {
+		valStr = "00000000"
+	}
+	if valUint64, err = strconv.ParseUint(valStr, 2, 8); err != nil {
+		err = fmt.Errorf("kconfig.GetAsByte: %v of %v cannot be parsed into a byte", val, key)
+		return
+	}
+
+	return byte(valUint64), nil
 }
 
 func (c Configuration) GetAsStringArr(key string) (value []string, err error) {

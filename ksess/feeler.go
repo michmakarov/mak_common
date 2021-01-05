@@ -63,18 +63,22 @@ func (f *feeler) feelerCountAsString() string {
 	return strconv.FormatInt(f.feelerCount, 10)
 }
 
+//210101 The requestRecord is incoming request descriptor.
+//Why does it need if there is r *http.Request?
+//It bear info which there are not in http.Request
 type requestRecord struct {
-	count     int64
-	start     time.Time
-	label     string
-	user_id   int
-	what      string //"refused" or ''accepted"
-	connState string
+	count       int64
+	start       time.Time
+	label       string
+	user_id     int
+	what        string //"refused" or ''accepted"
+	connState   string
+	contentType string
 }
 
 var (
-	err            error
-	printToConsole bool
+	err error
+	//printToConsole bool //210101 - feelerLogger.mood instead it
 	flrLogFileName string
 )
 
@@ -86,17 +90,21 @@ func GetFrontLogName() string {
 	}
 	return flrLogFileName
 }
+
+//210101
 func createFeeler(h http.Handler) (f *feeler, err error) {
 	//var FlrLogFileName string
 
-	if sessCP.Debug != 0 {
-		printToConsole = true
-	}
+	//if sessCP.Debug != 0 {
+	//	printToConsole = true
+	//}
 	f = &feeler{}
 	f.h = h
 	flrLogFileName = "Feeler" + time.Now().Format("20060102_150405") + ".log"
 
-	if f.flgr, err = createFlrLog(flrLogFileName, printToConsole); err != nil {
+	//kerr.PrintDebugMsg(false, "DFLAG210102", fmt.Sprintf("createFeeler: sessCP.Debug: %v", sessCP.Debug))
+
+	if f.flgr, err = createFlrLog(flrLogFileName, uint8(sessCP.Debug)); err != nil {
 		return nil, err
 	} else {
 		go f.flgr.Run()
@@ -120,7 +128,6 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		var rec interface{}
 		if rec = recover(); rec != nil {
-			//kerr.PrintDebugMsg(false, "checker", "ServeHTTP panic")
 			kerr.SysErrPrintf("feeler ServeHTTP coughts panic = %v", rec)
 			if sessCP.Debug != 0 {
 				debug.PrintStack()
@@ -136,7 +143,8 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		rr := requestRecord{requestCouter, time.Now(), khttputils.ReqLabel(r), cookData.UserID, do, currConnStateDescr.descr}
+		rr := requestRecord{requestCouter, time.Now(), khttputils.ReqLabel(r),
+			cookData.UserID, do, "CS:" + currConnStateDescr.descr, "CT:" + r.Header.Get(http.CanonicalHeaderKey("Content-Type"))}
 		f.flgr.send <- rr
 	}
 
@@ -145,7 +153,6 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.Method = strings.ToUpper(r.Method)
 
 	OUTSESSION_REQEST = checkURLPath(r.URL.Path)
-	kerr.PrintDebugMsg(false, "DFLAG201223_06:36", fmt.Sprintf("feeler:(cnt=%v)Query=%v;Apswd=%v;outSes=%v", requestCouter, r.URL.Query(), sessCP.AgentPassword, OUTSESSION_REQEST))
 
 	if checkAgent(w, r, OUTSESSION_REQEST) != nil { //Else the request has passed checking and may be performed.
 		return
@@ -173,8 +180,6 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-
-	//kerr.PrintDebugMsg(false, "ServeHTTP_201203_1129", fmt.Sprintf("ServeHTTP:before if doHijackedRequest; cookData=%v, c=%v", cookData, c))
 
 	if doHijackedRequest(w, r, cookData, c) {
 		WriteToLog("accepted")
@@ -214,18 +219,21 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 } //(f *Feeler) ServeHTTP
 
 type feelerLogger struct {
-	log            *log.Logger
-	printToConsole bool
-	send           chan requestRecord
+	log *log.Logger
+	//printToConsole bool
+	mode uint8
+	send chan requestRecord
 }
 
-func createFlrLog(fileName string, printToConsole bool) (FlrLog *feelerLogger, err error) {
+//210101 createFlrLog returns an error if is not success
+func createFlrLog(fileName string, mode uint8) (FlrLog *feelerLogger, err error) {
 	var f *os.File
-	//if sessCP.
+	//kerr.PrintDebugMsg(false, "DFLAG210102", fmt.Sprintf("createFlrLog: mode: %b", mode))
+
 	FlrLog = &feelerLogger{}
 	if f, err = os.Create(sessCP.LogsDir + fileName); err != nil {
 		kerr.SysErrPrintf("Не удалось создать lrLog - %v\n ", err.Error())
-		if printToConsole {
+		if mode > 0 {
 			fmt.Printf("Не удалось создать lrLog - %v\n ", err.Error())
 		}
 		FlrLog = nil
@@ -233,20 +241,46 @@ func createFlrLog(fileName string, printToConsole bool) (FlrLog *feelerLogger, e
 	} else {
 		FlrLog.log = log.New(f, "", log.LstdFlags)
 	}
-	FlrLog.printToConsole = printToConsole
+	//FlrLog.printToConsole = printToConsole
+	FlrLog.mode = mode
 	FlrLog.send = make(chan requestRecord, 253)
 	return
 }
 
+//210101
 func (fl *feelerLogger) Run() {
+	var rr requestRecord
+	var msg string
 	if fl == nil {
 		return
 	}
 	for {
-		rr := <-fl.send
-		fl.log.Printf("flr: (CNT==%v;user_id=%v)%v -- %v; what: %v \n", rr.count, rr.user_id, rr.label, rr.start, rr.what)
-		if fl.printToConsole {
-			fmt.Printf("flr: (CNT==%v;user_id=%v)%v -- %v --%v --%v\n ", rr.count, rr.user_id, rr.label, rr.start, rr.what, rr.connState)
+		rr = <-fl.send
+		//fl.log.Printf("flr: (CNT==%v;user_id=%v)%v -- %v; what: %v \n", rr.count, rr.user_id, rr.label, rr.start, rr.what)
+		//if fl.mode > 1 {
+		//	fmt.Printf("flr: (CNT==%v;user_id=%v)%v -- %v --%v --%v\n ", rr.count, rr.user_id, rr.label, rr.start, rr.what, rr.connState)
+		//}
+		msg = fl.getFlrlogMess(rr)
+		fl.log.Print(msg)
+		if byteSet(fl.mode, 1) {
+			fmt.Println(msg)
 		}
 	}
+}
+
+//210101 //210104 14:12
+func (fl *feelerLogger) getFlrlogMess(rr requestRecord) (mess string) {
+	var additionalMess string
+
+	//210101 here mess obtains its minimal default value
+	mess = fmt.Sprintf("flr: (CNT==%v;user_id=%v)%v -- %v; what:%v;\n",
+		rr.count, rr.user_id, rr.label, rr.start, rr.what)
+	if byteSet(fl.mode, 2) {
+		additionalMess = fmt.Sprintf("%v%v\n", additionalMess, rr.connState)
+	}
+	if byteSet(fl.mode, 3) {
+		additionalMess = fmt.Sprintf("%v%v\n", additionalMess, rr.contentType)
+	}
+	mess = mess + additionalMess
+	return
 }

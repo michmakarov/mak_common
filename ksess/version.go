@@ -16,7 +16,7 @@ import (
 
 //191002 That is the first question that emerged from weak ability to foresee - how to get this?
 //201224 15:14 the tgh.sh does it.
-var commit_data_1 = "---201216_rels:da21c61--*main--201230_0720---"
+var commit_data_1 = "---201216_rels:da21c61--*main--210105_0553---"
 
 //VersionDescr binds a version number with the version description
 type VersionDescr struct {
@@ -30,7 +30,8 @@ type VersionDescr struct {
 //versinList defines VersionDescr for each version that has been occured
 //Current version has index 0, previous one - index 1, and so on.
 var versionList = []VersionDescr{
-	{"201223", "makcommon.ksess", commit_data_1, "developing", blabla_201224},
+	{"210101", "makcommon.ksess", commit_data_1, "developing", blabla_210101},
+	{"201223", "makcommon.ksess", commit_data_1, "closed 210101 08_50", blabla_201224},
 	{"191223", "KSESS", commit_data_1, "closed 191224 12_18", blabla_191223},
 	{"191002", "KSESS", commit_data_1, "developing", blabla_191002},
 }
@@ -41,10 +42,19 @@ func GetCurrVerInfo() string {
 
 //Sequence such constant define textual description of a version.
 
+const blabla_210101 = `
+Plan:<br>
+210101 08:44
+To expand SessConfigParams.Debug with additional values to make capabilities of the front logging more flexible.
+Результаты <br>
+Предложение к следующей версии<br>
+`
+
 const blabla_201224 = `
 Plan:<br>
 To get goods that is enough for the rels project
 Результаты <br>
+Something was done but achieving of the goal is far. 
 Предложение к следующей версии<br>
 `
 

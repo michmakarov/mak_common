@@ -1,14 +1,20 @@
-Version=---201216_rels:da21c61--*main--201230_0720---
+Version=---201216_rels:da21c61--*main--210105_0553---
 INTRODUCTION
 Here definitions of the packet ksees  API are given.
 Definitions may be next kinds:
-intercepted request (see rules.-HIJACKED_REQUEST-)
+intercepted request (see rules.--HIJACKED_REQUEST--)
 types (including callback functions)
 functions
 confuguration parameters
 
 --login--
-It is a request (/login) that is intercepted when the config parameter -RegistrationThrouLogin- is true
+It is a --HIJACKED_REQUEST-- (see rules.--HIJACKED_REQUEST--) (/login) that is intercepted when the config parameter -RegistrationThrouLogin- is true.
+As a side effect it may create a new session (see rules.--SESSION--). The new session is created for user (see rules.--USER--) that is provided by 
+--CheckUserCredentails-- callback function.
+It returns status code 200 if the session was created and 400 if does not, with a apt message in the body.
+For retuning a status code 200 must be:
+- methods Get or POST
+
 --CheckUserCredentails--
 It is a callback function: type CheckUserCredentails func(action, userLogName, userPassword string) (user_id int, errMess string)
 It calculates incoming parameters into user_id. If the calculation was fault it returns errMess!="".
