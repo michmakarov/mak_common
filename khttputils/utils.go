@@ -164,3 +164,57 @@ func Headers(h http.Header, nl string) (headers string) {
 	}
 	return
 }
+
+//210214 12:24 Potensial_Error: Why ct[0] end ctype do not cast to
+func CheckCT(r *http.Request, ctype string) (err error) {
+	var ct []string = r.Header.Values(http.CanonicalHeaderKey("Content-Type"))
+	if len(ct) == 0 {
+		err = fmt.Errorf("Content-Type header not set")
+		return
+	}
+	if len(ct) > 1 {
+		err = fmt.Errorf("More than one value of Content-Type")
+		return
+	}
+	if ct[0] != ctype {
+		err = fmt.Errorf("Content-Type: expecting %v; is %v", ctype, ct[0])
+		return
+	}
+	return
+}
+
+func validateID(ID string) (err error) {
+	var fingers = make(map[string]bool)
+	fingers["0"] = true
+	fingers["1"] = true
+	fingers["2"] = true
+	fingers["3"] = true
+	fingers["4"] = true
+	fingers["5"] = true
+	fingers["6"] = true
+	fingers["7"] = true
+	fingers["8"] = true
+	fingers["9"] = true
+	if len(ID) == 0 {
+		err = fmt.Errorf("Empty identifier")
+		return
+	}
+	if ID == "0" {
+		return
+	}
+	for true {
+		if string(ID[0]) == "0" {
+			ID = strings.TrimPrefix(ID, "0")
+		}
+		if string(ID[0]) != "0" {
+			return
+		}
+	}
+	for i := 0; i < len(ID); i++ {
+		if fingers[string(ID[i])] == false {
+			err = fmt.Errorf("Illegal (%v) for ID letter", ID[i])
+			return
+		}
+	}
+	return
+}

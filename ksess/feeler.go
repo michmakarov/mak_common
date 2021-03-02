@@ -192,7 +192,7 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				WriteToLog("refused")
 				if sessCP.RedirectOnNoAuthorisation == "" { //181019
 					w.WriteHeader(401)
-					w.Write([]byte(fmt.Sprintf("<p>Access without authorization forbade - %v</p>", khttputils.ReqLabel(r))))
+					w.Write([]byte(fmt.Sprintf("<p>Access without authorization forbade:(%v from %v) </p>", r.URL.Path, r.RemoteAddr)))
 				} else {
 					http.Redirect(w, r, sessCP.RedirectOnNoAuthorisation, 303) //Why 303?
 				}

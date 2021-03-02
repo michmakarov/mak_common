@@ -110,13 +110,14 @@ func checkAgent(w http.ResponseWriter, r *http.Request, isOutSess bool) (err err
 	if sessCP.AgentPassword == "" {
 		return
 	}
-	if isOutSess { //201223 06:09
-		return
-	}
+	//if isOutSess { //201223 06:09//210222 21:13 All queries must be from a trusted agent!
+	//	return // There is "triffles" - from there all may be obtained without any restriction
+	//}
 	if isHijacked(r) { //201223 20:10
 		return
 	}
-	kerr.PrintDebugMsg(false, "DFLAG201223_07:31", fmt.Sprintf(" checkAgent before checking pwd:Path=%v; err=%v", r.URL.Path, err))
+	kerr.PrintDebugMsg(false, "DFLAG210218", fmt.Sprintf(" checkAgent before checking pwd:query=%v; err=%v", r.URL.Query(), err))
+	kerr.PrintDebugMsg(false, "DFLAG210218", fmt.Sprintf("VAL=%v;sessCP.AgentPassword=%v", r.FormValue(agentPasswordParName), sessCP.AgentPassword))
 	if r.FormValue(agentPasswordParName) != sessCP.AgentPassword {
 		err = fmt.Errorf("Not valid agent password")
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -124,13 +125,13 @@ func checkAgent(w http.ResponseWriter, r *http.Request, isOutSess bool) (err err
 		w.Write([]byte(fmt.Sprintf("%v", err.Error())))
 		return
 	}
-	kerr.PrintDebugMsg(false, "DFLAG201223_07:31", fmt.Sprintf(" checkAgent before register:Path=%v; err=%v", r.URL.Path, err))
+	kerr.PrintDebugMsg(false, "DFLAG210218", fmt.Sprintf(" checkAgent before register:Path=%v; err=%v", r.URL.Path, err))
 	if _, err = agents.register(r); err != nil {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(403)
 		w.Write([]byte(fmt.Sprintf("%v", err.Error())))
 		return
 	}
-	kerr.PrintDebugMsg(false, "DFLAG201223_07:31", fmt.Sprintf(" checkAgent before return:Path=%v; err=%v", r.URL.Path, err))
+	kerr.PrintDebugMsg(false, "DFLAG210218", fmt.Sprintf(" checkAgent before return:Path=%v; err=%v", r.URL.Path, err))
 	return
 }

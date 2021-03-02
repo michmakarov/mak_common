@@ -33,7 +33,7 @@ import (
 
 const (
 	ProgName     = "kconfig"
-	Version      = "---201216_rels:da21c61--*main--210105_0553---" //"190612" //"181003" //"180823"
+	Version      = "---201216_rels:51d5bee--*main--210222_2108---" //"190612" //"181003" //"180823"
 	VersionState = "developing"
 )
 
@@ -145,6 +145,27 @@ func (c Configuration) GetAsInt(key string) (value int, err error) {
 		err = fmt.Errorf("kconfig.GetAsInt: %v(type %T) of %v can not be converted to float64", val, val, key)
 	} else {
 		value = int(valueFloat)
+	}
+	return
+}
+
+//210219 10:20 for 201216_rels
+func (c Configuration) GetAsUint(key string) (value uint, err error) {
+	var val interface{}
+	var ok bool
+	var valueFloat float64
+	var intValue int
+
+	val = c[key]
+	if valueFloat, ok = val.(float64); !ok {
+		err = fmt.Errorf("kconfig.GetAsUint: %v(type %T) of %v can not be converted to float64\n", val, val, key)
+	} else {
+		intValue = int(valueFloat)
+	}
+	if intValue < 0 {
+		err = fmt.Errorf("kconfig.GetAsUint: for %v given negative value %v\n", key, intValue)
+	} else {
+		value = uint(intValue)
 	}
 	return
 }
