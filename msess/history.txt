@@ -1,0 +1,24 @@
+210302 12:44
+First question: how to write rules&terms. There was a consultation with Alesha
+He suggested the markdown. But it is needed to learn not only the language but olso to find and learn a convertor!
+1 - as plain text:
+pro : own hand is lord; it is as if my style to ignore all that are built on the basic software by no myself
+contra : it is neccesary to write a convertor and to desine own markup language
+_______14:31 Let it be so while!
++++++++++++++++++++++++++++++++++++
+210303 13:11
+Yesterday I began to write rules&terms,txt and ...
+Is the html really so complicated?
+And I decided to try to write it right on the html. How it will be?
++++++++++++++++++++++++++++++++++++
+210304 10:40
+What is a session? Is it a user session, or a agent session, or there are both?
+Let's officially (as a system notion) there is only agent session.
++++++++++++++++++++++++++++++++++++
+210306 09:42
+Yesterday I broke the wall by head until undestanding that write operations inton the agent array
+must be performed by single goroutine! For flow inward it is gracious and simple.
+But for flow outward vary need mutexes, generally saying.
+_______11:12 Gracious! But how to be with errors?
++++++++++++++++++++++++++++++++++++
+210306 13:26 I have suspended it for DOCKER. See /home/mich412/Desktop/41 -  пароль и другое/history.txt

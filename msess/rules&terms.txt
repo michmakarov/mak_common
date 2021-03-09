@@ -1,10 +1,27 @@
 Version=---201216_rels:51d5bee--*main--210222_2108---
-INTRODUCTION
-This file determines terms (with their definitions) that describ features of the ksess packet.
-The packet is a framework that offers some restriction for a http server. Namely they are:
-- realising --SYSTEM--
-- realising --SESSION--
-This assums terms of "http server", "http clinet" in their common mean.
+++INTRODUCTION++
+The packet msess realized http server for single page application.
+That is the packet assumes that a -USER- (a ultimate user of the -SYSTEM-) by mean of any program invoked
+the index page (with the path "/") only and only once for duration their interaction with the -SYSTEM-. 
+
+The central notion here is an -AGENT-, that is set of functionality which are provided with the index page and
+through wich a -USER- performs all business tasks for that the -SYSTEM- is intended
+
+It is important to see that -AGENT- is not a program (for example, a browser) on some host that the some person starts
+with perpose to do some business tasks. Through the program he but runs the functionality
+that was obtained with the index page.
+
+An -AGENT- is a part of the -SYSTEM-. As such it cannot be arbitrary dispite theoretical ability to perform
+some or all business tasks. That is the -AGENT- has been developed as a special part of the -SYSTEM- and -SERVER- as
+the main part of the -SYSTEM- can check and checks that requests are come from a legal -AGENT-.
+
+
+This file determines terms (with their definitions) that describ features of the msess packet.
+This assumes terms of "http server", "http clinet" in their common mean.
+
+++INTRODUCTION++ #end of INTRODUCTION
+
+
 
 --LOGGING--
 1. if a programer have not deny logging and there have been an error of creating it then GreateHub returns error.
