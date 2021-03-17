@@ -7,10 +7,6 @@ import (
 	"fmt"
 )
 
-func qqqmain() {
-	fmt.Println("Hello World!")
-}
-
 func register(data interface{}) (res MonitorResult) {
 	var a *Agent
 	var ok bool
@@ -30,6 +26,7 @@ func register(data interface{}) (res MonitorResult) {
 
 func unregister(data interface{}) (res MonitorResult) {
 	var a *Agent
+	var newAgents Agents
 	var ok bool
 	var ind int
 	var item *Agent
@@ -39,14 +36,39 @@ func unregister(data interface{}) (res MonitorResult) {
 	}
 	for ind, item = range agents {
 		if item.Tag == a.Tag {
-			res.Err = fmt.Errorf("unregister: Agent %v already registered", a.String())
 			break
+		} else {
+			newAgents = append(newAgents, agents[ind])
 		}
 	}
 	if ind >= len(agents)-1 {
 		res.Err = fmt.Errorf("unregister: Agent %v is not registered", a.String())
 		return
 	}
-	agents = append(agents[:ind], a[ind+1:])
+	agents = newAgents
+	return
+}
+
+func is_registered(data interface{}) (res MonitorResult) {
+	var cd *SessCookieData
+	var ok bool
+	var a Agent
+	if cd, ok = data.(*SessCookieData); !ok {
+		panic("is_registered: Given data is not converted to *SessCookieData")
+	}
+	for _, item := range agents {
+		if item.Tag == cd.Tag {
+			a = Agent{}
+			a.RegTime = item.RegTime
+			a.RemoteAddress = item.RemoteAddress
+			a.UserAgent = item.UserAgent
+			a.Tag = item.Tag
+			a.UserId = item.UserId
+			a.conn = item.conn
+			res.Data = &a
+			return
+		}
+	}
+	res.Err = fmt.Errorf("Agent with a tag of %v is not registered", cd.Tag)
 	return
 }

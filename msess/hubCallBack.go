@@ -14,6 +14,34 @@ import (
 	"mak_common/kerr"
 )
 
+//201214 07:03 see also rels readme.txt 201214_
+//it is an attempt to find a way to understand when and in what condition
+//an incoming request enters the handler.
+type ConnStateDescr struct {
+	conn  net.Conn
+	descr string
+}
+
+var currConnStateDescr *ConnStateDescr = &ConnStateDescr{nil, ""}
+
+//210101 if sessCP.Debug!=2 it does nothing
+func connStateHook(conn net.Conn, state http.ConnState) {
+	if !byteSet(byte(sessCP.Debug), 2) {
+		return
+	}
+	if currConnStateDescr.conn != conn {
+		currConnStateDescr = &ConnStateDescr{
+			conn: conn,
+			//descr: "",
+		}
+
+	}
+	currConnStateDescr.descr = fmt.Sprintf("%v-%v-%v", currConnStateDescr.descr, state, time.Now().Format("15:04:05.000"))
+	return
+}
+
+//____________________201214 07:03
+
 //It is a dispatcher which
 //maps a incoming web socket message to the outcoming map accordong to SCEX
 type ParserSocket func(user_id int, mess []byte) map[string]string
@@ -40,6 +68,8 @@ var (
 	checkURLPath         URLPathChecker       //5
 	getInitData          GetInitData          //6
 )
+
+var flr *feeler
 
 func CreateHub(ps ParserSocket, //1 not nill
 	//exUsers ExtractUsers, //2
@@ -121,10 +151,9 @@ func CreateHub(ps ParserSocket, //1 not nill
 		}
 	}
 
-	sessCP = &SessConfigParams{}
+	//sessCP = &SessConfigParams{}
 	*sessCP = *scp //setting the global (in the packet) variable
 	//kerr.PrintDebugMsg(false, "DFLAG210102", fmt.Sprintf("CreateHub:scp.Debug=%v", scp.Debug))
-	//kerr.PrintDebugMsg(false, "DFLAG210102", fmt.Sprintf("CreateHub:sessCP.Debug=%v", sessCP.Debug))
 	//-------scp
 
 	//201204 07:58
@@ -134,7 +163,7 @@ func CreateHub(ps ParserSocket, //1 not nill
 	} else {
 		gLog.run()
 	}
-	SendToGenLog("init()(ksess)", "general log created")
+	SendToGenLog("init()(msess)", "general log created")
 
 	//________________
 

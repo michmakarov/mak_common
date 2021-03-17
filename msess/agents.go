@@ -12,7 +12,7 @@ import (
 	//"path/filepath"
 	//"strings"
 	//"mak_common/kerr"
-	"sync"
+	//"sync"
 	"time"
 )
 
@@ -32,7 +32,7 @@ type Agent struct {
 }
 
 func (a *Agent) String() string {
-	return fmt.Sprintf("Time=%v;RA=%v;UA=%v", a.RegTime.Format("20060102_150405"), a.RemoteAddress, a.UserAgent)
+	return fmt.Sprintf("Time=%v;RA=%v;UA=%v", a.RegTime.Format(timeFormat), a.RemoteAddress, a.UserAgent)
 }
 
 type Agents []*Agent
@@ -47,7 +47,10 @@ type MonitorQuery struct {
 }
 
 var agents Agents
-var agentsMutex sync.Mutex
+
+var sessCP *SessConfigParams
+
+//var agentsMutex sync.Mutex
 var mqChan chan MonitorQuery
 
 var server *http.Server
@@ -67,6 +70,8 @@ func agentsMonitor() {
 			mR = register(mQ.Data)
 		case "unregister":
 			mR = unregister(mQ.Data)
+		case "is_registered":
+			mR = is_registered(mQ.Data)
 		default:
 			mR.Err = fmt.Errorf("agentsMonitor: illegal action (%v) of a query", mQ.Action)
 		}
@@ -74,59 +79,71 @@ func agentsMonitor() {
 	}
 } //agentMonitor
 
-func (agents Agents) unregAgent(a *Agent) (err error) {
+func unregAgent(a *Agent) (err error) {
+	var mQ MonitorQuery = MonitorQuery{"unregister", a, make(chan MonitorResult)}
+	var mR MonitorResult
+
 	if !MsessRuns() {
 		panic("Agent unregister: MSess does not run")
 	}
-	unRegChan <- a
-	return
+	mqChan <- mQ
+	mR = <-mQ.ResultChan
+
+	return mR.Err
 }
 
-func (agents Agents) regAgent(a *Agent) (err error) {
+func regAgent(a *Agent) (err error) {
+	var mQ MonitorQuery = MonitorQuery{"register", a, make(chan MonitorResult)}
+	var mR MonitorResult
 	if !MsessRuns() {
 		panic("Agent unregister: MSess does not run")
 	}
-	regChan <- a
+	mqChan <- mQ
+	mR = <-mQ.ResultChan
+	err = mR.Err
 	return
 }
 
-//
-func (a Agents) getCurrAgent(r *http.Request) (curA *Agent, err error) {
-	var cookieData *sessCookieData
-	if cookieData, err = getCookieData(r); err != nil {
-		err = fmt.Errorf("getCurrAgent: getCookieData err = %v ", err.Error())
+//210316 16:36
+//It returns err!=nil if a cd.Tag is not registered
+//or the agent's (a) data is not corresponded the data of request (r)
+//If err==nil the a is a copy of a agents[registered *Agent]
+func agentRegistered(cd *SessCookieData, r *http.Request) (a *Agent, err error) {
+	var mQ MonitorQuery = MonitorQuery{"is_registered", cd, make(chan MonitorResult)}
+	var mR MonitorResult
+	var ok bool
+	var forgedMess string
+
+	if !MsessRuns() {
+		panic("Agent unregister: MSess does not run")
+	}
+	mqChan <- mQ
+	mR = <-mQ.ResultChan
+	if mR.Err != nil {
+		err = mR.Err
 		return
 	}
-	agentsMutex.Lock()
-
-	for ind, item := range agents {
-		if item.Tag == cookieData.Tag {
-			curA = agents[ind]
-			break
-		}
+	if a, ok = mR.Data.(*Agent); !ok {
+		panic("agentRegistered: data returned from is_registered is not converted to *Agent")
 	}
-	agentsMutex.Unlock()
-
-	if curA.RemoteAddress != r.RemoteAddr {
-		err = fmt.Errorf("getCurrAgent: there is discrepancy registered remote addresses (%v) and actual one (%v) for agent with tag = %v. The registration record will be removed (unregistered). ",
-			curA.RemoteAddress, r.RemoteAddr, curA.Tag)
-		return
+	if a.UserId != cd.UserId {
+		forgedMess = fmt.Sprintf("not equal a.UserId==%v;cd.UserId==%v", a.UserId, cd.UserId)
+		goto forgedAgent
+	}
+	if a.RemoteAddress != r.RemoteAddr {
+		forgedMess = fmt.Sprintf("not equal a.RemoteAddress==%v;r.RemoteAddr==%v", a.RemoteAddress, r.RemoteAddr)
+		goto forgedAgent
+	}
+	if a.UserAgent != r.UserAgent() {
+		forgedMess = fmt.Sprintf("not equal a.UserAgent==%v;r.UserAgent()==%v", a.UserAgent, r.UserAgent())
+		goto forgedAgent
 	}
 
+forgedAgent:
+	err = fmt.Errorf("agentRegistered: forgeded agent: %v", forgedMess)
+	unregAgent(a)
+	a = nil
 	return
-}
-
-func (a Agents) String(lb string) (res string) {
-	agentsMutex.Lock()
-	for _, value := range a {
-		res = res + value.String() + lb
-	}
-	agentsMutex.Unlock()
-	return
-}
-
-func GetAgents() Agents {
-	return agents
 }
 
 //210304 11:02 an agent session's configuration parameters
@@ -155,6 +172,10 @@ type SessConfigParams struct {
 	//210304 11:16
 	WithoutActivity int // minutes - How many minutes some session may exist without activity
 	//--------------------- 210304 11:16
+
+	//210310 16:26 Path to index file
+	//IndexFIle string
+	//--------------------- 210310 16:26
 
 	HurryForbidden bool
 }

@@ -1,4 +1,8 @@
 // userLogging histiry 201203 07:30
+// 210315 19:10 To begin with, /home/mich412/go/src/mak_common/msess/history.txt begins from 210302 12:44
+// So, the issue is, as I remember, in that, that in this file must be logged only those requests
+//which have passed the feeler and have done by a programmer's handler.
+//That is, all those, that have been accepted.
 package msess
 
 import (
@@ -9,19 +13,15 @@ import (
 )
 
 type userLogRecord struct {
-	recId     string
+	reqNum    string //feelerCount
 	user_id   string //
 	tag       string //
-	tp        string //"ws" or "http"
-	ip        string //IP address
-	port      string //TCP port
+	addr      string //remote address
 	url       string //"<action name>:..." or "/..."
-	start     string // a moment of time in const startFormat
-	dur       int64
-	bytes_in  int64
-	bytes_out int64
-	done      int64 // 0 - not done;1 -normar; 2 - error
-	errMess   string
+	start     string // a moment of doing start in timeFormat (see feeler constant)
+	dur       string // duration of doing
+	code      string //http return code
+	extraInfo string
 }
 
 //user_id string,	tag string, tp string, ip string, port string, url string, start string, dur int64, bytes_in int64, bytes_out int64
@@ -42,31 +42,12 @@ func createUsersLog() (err error) {
 	if err = checkLogsDir(sessCP.LogsDir); err != nil {
 		return
 	}
-	if usersLog, err = os.Create("logs" + usersLogFileName); err != nil {
+	if usersLog, err = os.Create("logs/" + usersLogFileName); err != nil {
 		err = fmt.Errorf("createUsersLog err=%v", err.Error())
 		return
 	}
 	//kerr.PrintDebugMsg(false, "DFLAG201204_0638", fmt.Sprintf("createUsersLog: success"))
 	return
-}
-
-func newUserLogRecord(recId string, user_id string,
-	tag string, tp string, ip string, port string, url string, start string) (ld *userLogRecord) {
-	ld = &userLogRecord{
-		recId:     recId,
-		user_id:   user_id,
-		tag:       tag,
-		tp:        tp,
-		ip:        ip,
-		port:      port,
-		url:       url,
-		start:     start,
-		dur:       0,
-		bytes_in:  0,
-		bytes_out: 0,
-		done:      0,
-	}
-	return ld
 }
 
 func insertUserLogRecord(ulr *userLogRecord) {

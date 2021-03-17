@@ -22,3 +22,10 @@ But for flow outward vary need mutexes, generally saying.
 _______11:12 Gracious! But how to be with errors?
 +++++++++++++++++++++++++++++++++++
 210306 13:26 I have suspended it for DOCKER. See /home/mich412/Desktop/41 -  пароль и другое/history.txt
++++++++++++++++++++++++++++++++++++
+210309 15:00 It have turned out that to work the docker long time is very tiring. Or, maybe, very boring.
+So I will try to proceed with both.
++++++++++++++++++++++++++++++++++++
+210311 16:30
+As if the practice has been established: the first half of a day I devote to the docker, the second - to the msess
+Now what about this history file and the msess versioning: maybe this record is the last see msess version .
