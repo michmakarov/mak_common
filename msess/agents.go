@@ -28,7 +28,8 @@ type Agent struct {
 	Tag    string //a unique tag that identifies the agent
 	UserId string // "" means that no user currently enters the system
 
-	conn *websocket.Conn
+	conn  *websocket.Conn
+	WsOut chan WsMess
 }
 
 func (a *Agent) String() string {
@@ -50,7 +51,6 @@ var agents Agents
 
 var sessCP *SessConfigParams
 
-//var agentsMutex sync.Mutex
 var mqChan chan MonitorQuery
 
 var server *http.Server
@@ -63,20 +63,27 @@ func startAgentMonitor() {
 func agentsMonitor() {
 	var mQ MonitorQuery
 	var mR MonitorResult
+	var wsInMess WsMess
 	for true {
-		mQ = <-mqChan
-		switch mQ.Action {
-		case "register":
-			mR = register(mQ.Data)
-		case "unregister":
-			mR = unregister(mQ.Data)
-		case "is_registered":
-			mR = is_registered(mQ.Data)
-		default:
-			mR.Err = fmt.Errorf("agentsMonitor: illegal action (%v) of a query", mQ.Action)
-		}
-		mQ.ResultChan <- mR
-	}
+		select {
+		case mQ = <-mqChan:
+			switch mQ.Action {
+			case "register":
+				mR = register(mQ.Data)
+			case "unregister":
+				mR = unregister(mQ.Data)
+			case "is_registered":
+				mR = is_registered(mQ.Data)
+			case "send_to_ws":
+				mR = sendToWs(mQ.Data)
+			default:
+				mR.Err = fmt.Errorf("agentsMonitor: illegal action (%v) of a query", mQ.Action)
+			} //switch
+			mQ.ResultChan <- mR
+		case wsInMess = <-inWsMessChan:
+			doInWsMess(wsInMess)
+		} //select
+	} //for
 } //agentMonitor
 
 func unregAgent(a *Agent) (err error) {
@@ -129,20 +136,45 @@ func agentRegistered(cd *SessCookieData, r *http.Request) (a *Agent, err error) 
 	if a.UserId != cd.UserId {
 		forgedMess = fmt.Sprintf("not equal a.UserId==%v;cd.UserId==%v", a.UserId, cd.UserId)
 		goto forgedAgent
+	} else {
+		return
 	}
 	if a.RemoteAddress != r.RemoteAddr {
 		forgedMess = fmt.Sprintf("not equal a.RemoteAddress==%v;r.RemoteAddr==%v", a.RemoteAddress, r.RemoteAddr)
 		goto forgedAgent
+	} else {
+		return
 	}
 	if a.UserAgent != r.UserAgent() {
 		forgedMess = fmt.Sprintf("not equal a.UserAgent==%v;r.UserAgent()==%v", a.UserAgent, r.UserAgent())
 		goto forgedAgent
+	} else {
+		return
 	}
 
 forgedAgent:
 	err = fmt.Errorf("agentRegistered: forgeded agent: %v", forgedMess)
+	sendNoteAboutUnregister(err.Error())
 	unregAgent(a)
 	a = nil
+	return
+}
+
+//210319 13:50
+//SendMessToAgent makes copy of mess and send it to monitor
+func SendMessToAgent(mess WsMess) (err error) {
+	var messCopy WsMess
+	if messCopy, err = makeCopyAndCheck(mess); err != nil {
+		return
+	}
+	var mQ MonitorQuery = MonitorQuery{"send_to_ws", messCopy, make(chan MonitorResult)}
+	var mR MonitorResult
+	if !MsessRuns() {
+		panic("SendMessToAgent: MSess does not run")
+	}
+	mqChan <- mQ
+	mR = <-mQ.ResultChan
+	err = mR.Err
 	return
 }
 
@@ -185,4 +217,8 @@ func MsessRuns() bool {
 		return true
 	}
 	return false
+}
+
+func sendNoteAboutUnregister(mess string) {
+	panic("The sendNoteAboutUnregister has not been realized yet.")
 }

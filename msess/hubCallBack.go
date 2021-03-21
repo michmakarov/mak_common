@@ -44,7 +44,7 @@ func connStateHook(conn net.Conn, state http.ConnState) {
 
 //It is a dispatcher which
 //maps a incoming web socket message to the outcoming map accordong to SCEX
-type ParserSocket func(user_id int, mess []byte) map[string]string
+type DoInWsMess func(mess map[string]string)
 
 //It examines a request URL's path to allow doing the request regardless  existing the session
 //see variable checkURLPath and parameter URLCheker of function CreateHub

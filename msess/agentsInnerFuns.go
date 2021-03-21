@@ -5,6 +5,7 @@ package msess
 
 import (
 	"fmt"
+	"strings"
 )
 
 func register(data interface{}) (res MonitorResult) {
@@ -71,4 +72,60 @@ func is_registered(data interface{}) (res MonitorResult) {
 	}
 	res.Err = fmt.Errorf("Agent with a tag of %v is not registered", cd.Tag)
 	return
+}
+
+//FindAgentByTag returns nil if the searching is not successful.
+func findAgentByTag(tag string) (agent *Agent) {
+	for ind, item := range agents {
+		if item.Tag == tag {
+			return agents[ind]
+		}
+	}
+	return
+}
+
+func findAgentByUser(user_id string) (agent *Agent) {
+	for ind, item := range agents {
+		if item.UserId == user_id {
+			return agents[ind]
+		}
+	}
+	return
+}
+
+//210319 16:53
+// Always res.Data==nil
+// data : map of WsMess
+//210321 15:52 Is or is not there any sense in makeCopyAndCheck function?
+//In other words, is the data converted to a pointer or to a copy of the value?
+//To a pointer! See Questions interface{}. So the sense is and is very!
+func sendToWs(data interface{}) (res MonitorResult) {
+	var mess, messCopy WsMess
+	var ok bool
+	var a *Agent
+	var addr string
+	if mess, ok = data.(WsMess); !ok {
+		panic("sendToWs: Given data is not converted to WsMess")
+	}
+	if messCopy, err = makeCopyAndCheck(mess); err != nil {
+		res.Err = fmt.Errorf("makeCopyAndCheck err=%v", err.Error())
+		return
+	}
+	addr = messCopy["to"]
+	switch strings.Split(addr, ":")[0] {
+	case "tag":
+		a = findAgentByTag(strings.Split(addr, ":")[1])
+	case "user":
+		a = findAgentByUser(strings.Split(addr, ":")[1])
+	}
+	if a == nil {
+		res.Err = fmt.Errorf("=%v", err.Error())
+		return
+	}
+	a.WsOut <- messCopy
+	return
+}
+
+func doInWsMess(wsInMess WsMess) {
+
 }

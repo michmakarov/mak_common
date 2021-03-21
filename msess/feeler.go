@@ -169,9 +169,11 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	}
 
+	//3. Now there is some agent and we can wait "/ws"
+
 gettingResponse:
 	r = r.WithContext(context.WithValue(r.Context(), NumberCtxKey, strconv.FormatInt(requestCouter, 10)))
-	r = r.WithContext(context.WithValue(r.Context(), UserIdCtxKey, cookData.UserIDAsString()))
+	r = r.WithContext(context.WithValue(r.Context(), UserIdCtxKey, agent.UserId))
 	r = r.WithContext(context.WithValue(r.Context(), URLCtxKey, r.RequestURI)) //190408
 	ctx, cancel = context.WithCancel(r.Context())
 	r = r.WithContext(ctx)

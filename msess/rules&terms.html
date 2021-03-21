@@ -30,10 +30,14 @@ with perpose to do some business tasks. Through the program he but runs the func
 that was obtained with the index page.
 </p>
 <p>
-An -AGENT- is a part of the -SYSTEM-. As such it cannot be arbitrary dispite theoretical ability to perform
+An <a href="#AGENT">AGENT</a> is a part of the -SYSTEM-. As such it cannot be arbitrary dispite theoretical ability to perform
 some or all business tasks. That is the -AGENT- has been developed as a special part of the <a href="#SYSTEM">SYSTEM</a>
 and <a href="#SERVER">Server</a> as the main part of the <a href="#SYSTEM">SYSTEM</a>
 can check and checks that requests are come from a legal <a href="#AGENT">AGENT</a>.
+</p>
+<p>
+Each <a href="#AGENT">AGENT</a> has a web socket connnection with <a href="#SERVER">Server</a>. Through it they exchange with
+json messages of format <a href="#WSMESS">WSMESS</a>
 </p>
 <p>
 This file determines terms (with their definitions) that describ features of the msess packet.
@@ -46,13 +50,17 @@ This assumes terms of "http server", "http client" in their common mean.
 	<h3> DEFINITIONS </h3>
 	<p id="USER">--USER<br>
 		An USER is some person
-    that have authority to perform some set of their business tasks through <a href="#SYSTEM">SYSTEM</a>. 
+    that have authority to perform some set of their business tasks into <a href="#SYSTEM">SYSTEM</a>.
+    An USER interacts with SYSTEM through an <a href="#AGENT">AGENTs</a> and through only the AGENT.
+    The first task that USER can perform into SYSTEM is proving his authority, that is login.
+    His last task is announcement of end of his work, that is logout.<br>
+    This last task causes destroying of the AGENT. That is an AGENT can serve only one USER.
 	</p>
-	<p id="SYSTEM">
+	<p id="SYSTEM">--SYSTEM<br>
 		The SYSTEM is program device through which a <a href="#USER">USERs</a> cam perform some set of their business tasks. 
 		The SYSTEM is unity of a http server (see <a href="#SERVER">SERVER</a>) and its special http clients called <a href="AGENT">AGENTs</a>.
 	</p>
-	<p id="SERVER">
+	<p id="SERVER">--SERVER<br>
 		The SERVER is http server that was developed as the part of the <a href="#SYSTEM">SYSTEM</a>). It is the central part of the SYSTEM,
 		that means that the SERVER is only unique part of the SYSTEM and can spawn another parts of the SYSTEM
     - <a href="#AGENT">AGENTs</a>. The server in common expect with each request a special encoded cookie. 
@@ -61,7 +69,7 @@ This assumes terms of "http server", "http client" in their common mean.
     They are so called out session requests and intercept requests. One of the last, with (relative) URL "/"
     is named <a href="#INDEX_REQUEST">INDEX REQUEST</a>. This request produces new agent
 	</p>
-	<p id="AGENT">
+	<p id="AGENT">--AGENT<br>
 		An AGENT is a set of functionality and visial elements that realizes a special http client through which an user asks the SYSTEM
     to fulfil some task. That is an AGENT is a unity of a finite user interface and functions through which he can
     asks the system to do some action. In general, a finite user interacts with any system through some interface and functions,
@@ -69,9 +77,35 @@ This assumes terms of "http server", "http client" in their common mean.
     that it was developed intentionally as a part of the system.<br>
     See also <a href="#SYSTEM">SYSTEM</a>, <a href="#SERVER">SERVER</a>) and <a href="#INTRODUCTION">INTRODUCTION</a>
 	</p>
-  <p id="INDEX_REQUEST">
+  <p id="INDEX_REQUEST">--INDEX_REQUEST<br>
     An INDEX REQUEST is a request with reletive url "/". It is one of <a href="INTECEPT_REQUESTS">INTECEPT_REQUESTS</a> 
-  </p
+  </p>
+
+  <p id="WSMESS">--WSMESS<br>
+    WSMESS stands for web socket message.
+    It is a map[string]string, with which an <a href="#AGENT">AGENT</a> and the <a href="#SERVER">Server</a>
+    are exchanging information. This map must satisfies next requirements:
+  <ol>
+  <li>Keys are case sensitive.</li>
+  <li>If there is the key "err" and its value is not empty
+    it carries the error message and all other keys (if they are) deliver additional info to the err's value.
+    Such WSMESS is called ERRWSMESS
+    If its value is empty the key is ignored
+  </li>
+  <li>If there is not the key "err" or its value is empty must be keys "action", "From", and "To".</li>
+  <li>The keys "from", and "to" carry addresses of from the message originates and where it destines.
+    "user:iser_id" or "tag:tag_value". The last form means the message from an AGENT when no user is bound to them.<br>
+    Values of these keys may be empty. In such cases the "from" means from the SERVER and the "to" means to all.
+  </li>
+  <li>The key "Action" carry a description of a want of a sender to do some deed by recipient.<br>
+    It is assumed that WSMESS may meet some doer into chain of working that knows what to do with WSMESS with given action.
+    See <a href="#WSCHAIN">WSCHAIN</a>
+  </li>
+  </ol> 
+  </p>
+
+
+  
 </div> <!-- DEFINITIONS -->
 <!-- END -->
 </body>
