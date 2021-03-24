@@ -165,60 +165,6 @@ func serveWs(w http.ResponseWriter, r *http.Request, a *Agent) {
 	go a.readPump()
 }
 
-//For what does the function need?
-func calcHTTPResponse(c *sessClient, w http.ResponseWriter, r *http.Request, cancel context.CancelFunc) {
-	var (
-		ulr   *userLogRecord
-		start string
-		begin = time.Now()
-		//dur          time.Duration
-		ip, port     string
-		user_id, tag string
-		recId        string //idendifier of a record in SQLite
-		chr          *Chore
-		//err          error
-	)
-
-	kerr.PrintDebugMsg(false, "ServeHTTP_201203_1129", fmt.Sprintf("calcHTTPResponse:very start; c=%v", c))
-
-	//start = time.Now().Format(startFormat)
-	start = begin.Format(startFormat)
-
-	ip, port = khttputils.Grt_IP_Port(r)
-
-	//recId, err = kutils.TrueRandInt() //201203 20:45 Now in it there is not some need
-	//if err != nil {
-	//	kerr.SysErrPrintf("calcHTTPResponse: kutils.TrueRandInt() returns error")
-	//}
-
-	if c != nil {
-		user_id = c.user_idAsString()
-		tag = c.tagAsString()
-	} else {
-		user_id = "?"
-		tag = "?"
-	}
-	changeClient.Lock() //Lock 201203 11:57
-	ulr = newUserLogRecord(recId, user_id, tag, "http", ip, port, r.URL.String(), start)
-	changeClient.Unlock() //Unlock  201203 11:57
-
-	//kerr.PrintDebugMsg(false, "ServeHTTP_201203_1129", fmt.Sprintf("calcHTTPResponse: before globalNotDone.AddHTTPChore; ulr=%v", ulr))
-
-	chr = globalNotDone.AddHTTPChore(ulr, w, r, cancel)
-
-	<-chr.doneChan
-
-	ulr.dur = int64(time.Now().Sub(begin))
-
-	//kerr.PrintDebugMsg(false, "ServeHTTP_201203_1129", fmt.Sprintf("calcHTTPResponse: after chr.doneChan; dur=%v; chr=%v", dur, chr))
-
-	changeClient.Lock() //Lock ----------------
-	//updateUserLogRecord(int64(dur), -1, -1, 1, recId)
-	insertUserLogRecord(ulr)
-	changeClient.Unlock() //Unlock ------------------
-
-}
-
 //210319 14:23
 //makeCopyAndCheck copies the mess to the copyMess then checks the mess for satisfaction of rules (see --WSMESS)
 //if err!=nil then copyMess==nil

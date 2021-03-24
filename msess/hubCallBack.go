@@ -22,6 +22,7 @@ type ConnStateDescr struct {
 	descr string
 }
 
+var serverStopped chan string = make(chan string)
 var currConnStateDescr *ConnStateDescr = &ConnStateDescr{nil, ""}
 
 //210101 if sessCP.Debug!=2 it does nothing
@@ -61,40 +62,24 @@ type CheckUserCredentails func(action, userLogName, userPassword string) (user_i
 type GetInitData func(user_id int) (data interface{}, err error)
 
 var (
-	parserSocket         ParserSocket         //1
-	extractUsers         ExtractUsers         //2
-	checkUserCredentails CheckUserCredentails //3
-	reqMultiplexer       http.Handler         //*mux.Router          //4
-	checkURLPath         URLPathChecker       //5
-	getInitData          GetInitData          //6
+	cb_doInWsMess        DoInWsMess           //1
+	checkUserCredentails CheckUserCredentails //2
+	reqMultiplexer       http.Handler         //*mux.Router          //3
+	checkURLPath         URLPathChecker       //4
+	//getInitData          GetInitData          //5
 )
 
 var flr *feeler
 
-func CreateHub(ps ParserSocket, //1 not nill
-	//exUsers ExtractUsers, //2
-	cuc CheckUserCredentails, //3 not nill
-	mx http.Handler, //201222 16:25 //mx *mux.Router, //4 not nill
-	URLCheker URLPathChecker, //5
-	initDataGetter GetInitData, //6
+func CreateHub(doInWsMess DoInWsMess, //1 may be nill
+	cuc CheckUserCredentails, //2 not nill
+	mx http.Handler, //201222 16:25 //mx *mux.Router, //3 not nill
+	URLCheker URLPathChecker, //4 not nil
 	scp *SessConfigParams) (err error) { //CreateHub body
-	time.Sleep(time.Second) //191223 For what is it?
+	time.Sleep(time.Second) //191223 For what is it? 210322 Exposure time for ending setting in other goroutines
 	//1 (callback)
-	if ps == nil {
-		err = errors.New("CreateHub: no ParserSocket")
-		return
-	} else {
-		parserSocket = ps
-	}
-
+	cb_doInWsMess = doInWsMess
 	//2 (callback)
-	//if exUsers == nil {
-	//	extractUsers = extractUsersDefault
-	//} else {
-	//	extractUsers = exUsers
-	//}
-
-	//3 (callback)
 	if cuc == nil {
 		err = errors.New("CreateHub: no function for checking credentials")
 		return
@@ -102,7 +87,7 @@ func CreateHub(ps ParserSocket, //1 not nill
 		checkUserCredentails = cuc
 	}
 
-	//4 (callback)
+	//3 (callback)
 	if mx == nil {
 		err = errors.New("CreateHub: no handler for incoming requests")
 		return
@@ -110,16 +95,13 @@ func CreateHub(ps ParserSocket, //1 not nill
 		reqMultiplexer = mx
 	}
 
-	//5 (callback)
+	//4 (callback)
 	if URLCheker == nil {
 		err = errors.New("CreateHub: no URLCheker")
 		return
 	} else {
 		checkURLPath = URLCheker
 	}
-
-	//6 (callback)
-	getInitData = initDataGetter
 
 	//scp------
 
@@ -141,19 +123,25 @@ func CreateHub(ps ParserSocket, //1 not nill
 
 	}
 
-	if scp.Admins == nil {
-		scp.Admins = []string{0}
+	if scp.WithoutHTTPActivity < 15 { //181121_1
+		scp.WithoutHTTPActivity = 15
 	}
 
-	if scp.WithoutHTTPActivity > 0 {
-		if scp.WithoutHTTPActivity < 15 { //181121_1
-			scp.WithoutHTTPActivity = 15
-		}
+	if scp.ServerReadTimeout < 1 {
+		scp.ServerReadTimeout = 1
+	}
+
+	if scp.CleanUpNotDoneRequestStorage < 100 {
+		scp.CleanUpNotDoneRequestStorage = 100
+	}
+
+	if scp.CallBakTimeout < 100 {
+		scp.CallBakTimeout = 100
 	}
 
 	//sessCP = &SessConfigParams{}
 	*sessCP = *scp //setting the global (in the packet) variable
-	//kerr.PrintDebugMsg(false, "DFLAG210102", fmt.Sprintf("CreateHub:scp.Debug=%v", scp.Debug))
+
 	//-------scp
 
 	//201204 07:58
@@ -187,9 +175,10 @@ func CreateHub(ps ParserSocket, //1 not nill
 		ConnState:      connStateHook,
 		Addr:           scp.Listening_address,
 		Handler:        flr,
-		ReadTimeout:    0, //60 * time.Second,
-		WriteTimeout:   0, //60 * time.Second,
+		ReadTimeout:    time.Second * time.Duration(sessCP.ServerReadTimeout),
+		WriteTimeout:   0,
 		MaxHeaderBytes: 1 << 20,
+		ErrorLog:       httpServerLog,
 	}
 	//server.RegisterOnShutdown(nil)
 
@@ -204,23 +193,17 @@ func CreateHub(ps ParserSocket, //1 not nill
 		}
 		kerr.SysErrPrintf("server.ListenAndServe stopped with message %s", err.Error())
 		mess := fmt.Sprintf("--S-- server.ListenAndServe stopped with message %s", err.Error())
-		close(ServerStopped)
+		close(ServerStopped) //210323 16:43; for what? Idiot! It is public!
 		serverStopped <- mess
 	}()
-	time.Sleep(time.Millisecond * 50)
+	time.Sleep(time.Millisecond * 50) //210323 16:38; maybe after the delay the server will stop suddenly.
 
 	select {
 	case mess := <-serverStopped:
 		err = fmt.Errorf("server.ListenAndServeTLS not start; err=%s", mess)
 		return
-	default:
+	default: // The server has not stopped and the function ends with no error
 	}
-
-	//hub = &sessHub{
-	//	outChan: make(chan toClients),
-	//	clients: make(map[*sessClient]bool),
-	//}
-	//go hub.run()
 
 	//if errRS := restoreSessions(); errRS != nil {
 	//	err = fmt.Errorf("CreateHub: restoreSessions err = %v", errRS.Error())

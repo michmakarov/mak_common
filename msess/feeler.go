@@ -65,6 +65,7 @@ func (f *feeler) feelerCountAsString() string {
 	return strconv.FormatInt(f.feelerCount, 10)
 }
 
+//210323 05:34 it was reworked under the agent conception.
 //210101 The requestRecord is incoming request descriptor.
 //Why does it need if there is r *http.Request?
 //It bear info which there are not in http.Request
@@ -72,6 +73,7 @@ type requestRecord struct {
 	count       int64
 	start       string
 	reqDescr    string
+	agent       string //agent.shortDecr()
 	what        string //"refused" or ''accepted"
 	connState   string
 	contentType string
@@ -177,7 +179,7 @@ gettingResponse:
 	r = r.WithContext(context.WithValue(r.Context(), URLCtxKey, r.RequestURI)) //190408
 	ctx, cancel = context.WithCancel(r.Context())
 	r = r.WithContext(ctx)
-	calcHTTPResponse(c, w, r, cancel)
+	calcHTTPResponse(f.feelerCount, agent, w, r, cancel)
 	return
 
 exitOnErr:
@@ -234,13 +236,15 @@ func (fl *feelerLogger) Run() {
 	}
 }
 
+//210323 05:23
+//getFlrlogMess converts the rr to a string for writing to the front log.
 //210101 //210104 14:12
 func (fl *feelerLogger) getFlrlogMess(rr requestRecord) (mess string) {
 	var additionalMess string
 
 	//210101 here mess obtains its minimal default value
-	mess = fmt.Sprintf("flr: (CNT==%v;user_id=%v)%v -- %v; what:%v;\n",
-		rr.count, rr.user_id, rr.label, rr.start, rr.what)
+	mess = fmt.Sprintf("flr: (CNT==%v;user=%v)%v -- %v; what:%v;\n",
+		rr.count, rr.agent, rr.reqDescr, rr.start, rr.what)
 	if byteSet(fl.mode, 2) {
 		additionalMess = fmt.Sprintf("%v%v\n", additionalMess, rr.connState)
 	}
@@ -249,16 +253,6 @@ func (fl *feelerLogger) getFlrlogMess(rr requestRecord) (mess string) {
 	}
 	mess = mess + additionalMess
 	return
-}
-
-func DoIndexRequest(w http.ResponseWriter, r *http.Request) {
-	var cookieData *sessCookieData
-
-	if r.URL.Path != "/" {
-		return
-	}
-	if cookieData, err = getSession(r); err != nil {
-	}
 }
 
 //210316 14:52 How would not forget that there is this function!

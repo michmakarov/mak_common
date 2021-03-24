@@ -33,7 +33,7 @@ func GetCurrVer() string {
 //Sequence next constants define textual descriptions of versions.
 
 const blabla_210311 = `
-Plan:<br>
+Plan:<br>---
 <br>
 <br>
 Developer_notes:<br>
@@ -49,7 +49,18 @@ Is it so?
 As it is shown by /home/mich412/Progects/http_srv_210312 there is an acceptable way.
 <br> 210316 12:35 A urgent want have arised to rid of the web socket for the simple periodic polling.
 But after https://learn.javascript.ru/long-polling and https://developer.mozilla.org/en-US/docs/Web/API/EventSource
-the want was diminished.
-Результаты:<br>
-Предложение к следующей версии:<br>
+the want was diminished.<br>
+210322 16:23 Golang http.Server
+1. Is there the way to find out the response code that Server.Handler returns? As if there is not.
+2. Server.WriteTimeout = 0; It seems well as there is the info about not done requests.
+3. Server.ReadTimeout = 0; It does not seems well at all as maybe errors in an agent realization, as well wrong work of the net.
+4. If waiting of a complete request is aborted by Server.ReadTimeout may in what way the info about it be obtained?
+May be Server.ErrorLog gives it.
+<br>210324 11:24
+The truth that I have understanded very recently: mutexes gard code but not data.
+So if you desire to gard data you must guarantee that only one function has access to it (for changing!).
+And so the not_done_global_storage must will be remade.<br>
+<br>---
+Результаты:<br>---
+Предложение к следующей версии:<br>---
 `

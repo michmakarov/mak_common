@@ -1,19 +1,19 @@
 package msess
 
 import (
+	"context"
 	"fmt"
-	//"mak_common/kutils"
 	"net/http"
 
+	//"sync"
+	"time"
+
 	"github.com/gorilla/websocket"
-
 	//"os"
-
 	//"path/filepath"
 	//"strings"
 	//"mak_common/kerr"
-	//"sync"
-	"time"
+	//"mak_common/kutils"
 )
 
 const maxAgents = 100
@@ -54,6 +54,23 @@ var sessCP *SessConfigParams
 var mqChan chan MonitorQuery
 
 var server *http.Server
+
+//var calcHTTPResponseMtx sync.Mutex
+
+func (a *Agent) shortDescr(sd string) {
+	var user string
+	if a == nil {
+		sd = "no agent"
+		return
+	}
+	if a.UserId == "" {
+		user = "no"
+	} else {
+		user = a.UserId
+	}
+	sd = fmt.Sprintf("User:%v(%v)", user, a.Tag)
+	return
+}
 
 func startAgentMonitor() {
 	mqChan = make(chan MonitorQuery)
@@ -112,7 +129,7 @@ func regAgent(a *Agent) (err error) {
 }
 
 //210316 16:36
-//It returns err!=nil if a cd.Tag is not registered
+//It returns err!=nil
 //or the agent's (a) data is not corresponded the data of request (r)
 //If err==nil the a is a copy of a agents[registered *Agent]
 func agentRegistered(cd *SessCookieData, r *http.Request) (a *Agent, err error) {
@@ -199,15 +216,29 @@ type SessConfigParams struct {
 	Listening_address string
 	//----------------
 
-	Admins []string //Administrators, default Admins={"0"}
+	//Admins []string //Administrators, default Admins={"0"} //excluded 210323 15:47
 
 	//210304 11:16
 	WithoutActivity int // minutes - How many minutes some session may exist without activity
 	//--------------------- 210304 11:16
 
-	//210310 16:26 Path to index file
-	//IndexFIle string
-	//--------------------- 210310 16:26
+	//210322 16:37
+	ServerReadTimeout int //second >= 1; Server.ReadTimeout = time.Second*time.Duration(ServerReadTimeout)
+	//--------------------- ServerReadTimeout
+
+	//210323 15:52
+	WithoutHTTPActivity int //minutes; not less 15
+	//--------------------- WithoutHTTPActivity
+
+	//--------------------- 210324 05:42 //181228_2
+	CleanUpNotDoneRequestStorage int //the period of cleaning up the global storage of not done requsts in millisecond
+	//If it less than 100 it will be set in 100 (the default value)
+	//---------------------
+
+	//--------------------- 210324 20:56
+	CallBakTimeout int //miliseconds; the period of waiting retuning of callback function
+	//If it less than 100 it will be set in 100 (the default value)
+	//---------------------
 
 	HurryForbidden bool
 }
@@ -221,4 +252,39 @@ func MsessRuns() bool {
 
 func sendNoteAboutUnregister(mess string) {
 	panic("The sendNoteAboutUnregister has not been realized yet.")
+}
+
+//
+func calcHTTPResponse(reqNum int64, a *Agent, w http.ResponseWriter, r *http.Request, cancel context.CancelFunc) {
+	var (
+		ulr   *userLogRecord
+		start string
+		begin = time.Now()
+		//dur          time.Duration
+		ip, port     string
+		user_id, tag string
+		recId        string //idendifier of a record in SQLite
+		chr          *Chore
+		//err          error
+	)
+
+	//kerr.PrintDebugMsg(false, "ServeHTTP_201203_1129", fmt.Sprintf("calcHTTPResponse:very start; c=%v", c))
+
+	start = begin.Format(timeFormat)
+
+	//kerr.PrintDebugMsg(false, "ServeHTTP_201203_1129", fmt.Sprintf("calcHTTPResponse: before globalNotDone.AddHTTPChore; ulr=%v", ulr))
+	ulr = newUserLogRecord(fmt.Sprintf("%v", reqNum), start, a.UserId, a.Tag, r.RemoteAddr, r.RequestURI, "", "", "")
+
+	chr = globalNotDone.AddHTTPChore(ulr, w, r, cancel)
+
+	<-chr.doneChan
+
+	ulr.dur = fmt.Sprintf("%v", time.Now().Sub(begin))
+
+	//kerr.PrintDebugMsg(false, "ServeHTTP_201203_1129", fmt.Sprintf("calcHTTPResponse: after chr.doneChan; dur=%v; chr=%v", dur, chr))
+
+	//calcHTTPResponseMtx.Lock() //Lock ----------------
+	insertUserLogRecord(ulr)
+	//calcHTTPResponseMtx.Unlock() //Unlock ------------------
+
 }

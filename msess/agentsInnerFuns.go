@@ -50,6 +50,8 @@ func unregister(data interface{}) (res MonitorResult) {
 	return
 }
 
+//210323 05:52 The question: if the cd is not beared a valid tag
+//Then it retuns an empty agent! 14:25 -- nil! As it was initially!
 func is_registered(data interface{}) (res MonitorResult) {
 	var cd *SessCookieData
 	var ok bool
