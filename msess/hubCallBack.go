@@ -56,23 +56,23 @@ type URLPathChecker func(path string) bool
 //If no such function given then the extractUsersDefault is used
 type ExtractUsers func(answer map[string]string) (users []int)
 
-//see api.txt
-type CheckUserCredentails func(action, userLogName, userPassword string) (user_id int, errMess string)
+//see api.html
+type CheckUserCredential func(userLogName, userPassword string) (user_id int, account, errMess string)
 
-type GetInitData func(user_id int) (data interface{}, err error)
+//type GetInitData func(user_id int) (data interface{}, err error)
 
 var (
-	cb_doInWsMess        DoInWsMess           //1
-	checkUserCredentails CheckUserCredentails //2
-	reqMultiplexer       http.Handler         //*mux.Router          //3
-	checkURLPath         URLPathChecker       //4
+	cb_doInWsMess       DoInWsMess          //1
+	checkUserCredential CheckUserCredential //2
+	reqMultiplexer      http.Handler        //*mux.Router          //3
+	checkURLPath        URLPathChecker      //4
 	//getInitData          GetInitData          //5
 )
 
 var flr *feeler
 
 func CreateHub(doInWsMess DoInWsMess, //1 may be nill
-	cuc CheckUserCredentails, //2 not nill
+	cuc CheckUserCredential, //2 not nill
 	mx http.Handler, //201222 16:25 //mx *mux.Router, //3 not nill
 	URLCheker URLPathChecker, //4 not nil
 	scp *SessConfigParams) (err error) { //CreateHub body
@@ -81,10 +81,10 @@ func CreateHub(doInWsMess DoInWsMess, //1 may be nill
 	cb_doInWsMess = doInWsMess
 	//2 (callback)
 	if cuc == nil {
-		err = errors.New("CreateHub: no function for checking credentials")
+		err = errors.New("CreateHub: no function for checking user credential")
 		return
 	} else {
-		checkUserCredentails = cuc
+		checkUserCredential = cuc
 	}
 
 	//3 (callback)

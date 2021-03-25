@@ -12,9 +12,10 @@ import (
 
 //checkUserCredentailsEnv and other functions with suffix "Env" are
 //envelopes for a programer's callback functions
-func checkUserCredentailsEnv(action, userLogName, userPassword string) (user_id int, errMess string) {
+func checkUserCredentailsEnv(userLogName, userPassword string) (user_id int, account, errMess string) {
 	type Result struct {
 		user_id int
+		account string
 		errMess string
 	}
 	var res Result
@@ -24,7 +25,7 @@ func checkUserCredentailsEnv(action, userLogName, userPassword string) (user_id 
 		var errMess string
 
 		//kerr.PrintDebugMsg(false, "DFLAG201224_07:09", fmt.Sprintf("checkUserCredentailsEnv: before calling"))
-		user_id, errMess = checkUserCredentails(action, userLogName, userPassword)
+		user_id, account, errMess = checkUserCredential(userLogName, userPassword)
 
 		resChan <- Result{user_id, errMess}
 	}
@@ -41,16 +42,6 @@ func checkUserCredentailsEnv(action, userLogName, userPassword string) (user_id 
 		errMess = fmt.Sprintf("checkUserCredentails was interrupted by timeout (CallBakTimeout=%v)", sessCP.CallBakTimeout)
 		return
 	}
-}
-
-//201224 12:29 for loginpost
-func isInInts(i int, ints []int) bool {
-	for _, val := range ints {
-		if i == val {
-			return true
-		}
-	}
-	return false
 }
 
 //210101 for func (fl *feelerLogger) getFlrlogMess

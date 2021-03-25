@@ -115,11 +115,10 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		clientErrMess string
 		clientErrCode int
 
-		agent             *Agent
-		cancel            context.CancelFunc
-		ctx               context.Context
-		requestCouter     int64 //!!! 190820_2 The problem of requests counter
-		OUTSESSION_REQEST bool  //201223 05:45
+		agent         *Agent
+		cancel        context.CancelFunc
+		ctx           context.Context
+		requestCouter int64
 	)
 	defer func() {
 		var rec interface{}
@@ -134,7 +133,7 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	var WriteToLog = func(user, do string) { //210309 16:46
+	var WriteToLog = func(do string) { //210325 04:32 //210309 16:46
 		var reqestDescr string = getRequestDescr(r)
 		rr := requestRecord{
 			count:       requestCouter,
@@ -160,6 +159,7 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if cD, err = getCookieData(r); err != nil {
 		if agent, err = agentRegistered(cD, r); err != nil { //no agent (or it was forgeded)
 			if r.URL.Path == "/" { //the http client will be given a new agent
+				WriteToLog("accepted")
 				indexHandler(w, r)
 				return
 			} else { //no agent: all requests excluding "/" are forbidden
@@ -171,7 +171,21 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	//3. Now there is some agent and we can wait "/ws"
+	//3. Now there is some agent and we can wait "/ws", "/login", "logout"
+	switch r.URL.Path {
+	case "/ws":
+		serveWs(w, r, agent)
+		WriteToLog("accepted")
+		return
+	case "/login":
+		login(w, r, agent)
+		WriteToLog("accepted")
+		return
+	case "/logout":
+		logout(w, r, agent)
+		WriteToLog("accepted")
+		return
+	}
 
 gettingResponse:
 	r = r.WithContext(context.WithValue(r.Context(), NumberCtxKey, strconv.FormatInt(requestCouter, 10)))
@@ -179,6 +193,7 @@ gettingResponse:
 	r = r.WithContext(context.WithValue(r.Context(), URLCtxKey, r.RequestURI)) //190408
 	ctx, cancel = context.WithCancel(r.Context())
 	r = r.WithContext(ctx)
+	WriteToLog("accepted")
 	calcHTTPResponse(f.feelerCount, agent, w, r, cancel)
 	return
 
@@ -186,6 +201,7 @@ exitOnErr:
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(clientErrCode)
 	w.Write([]byte(clientErrMess))
+	WriteToLog("refused")
 
 } //(f *Feeler) ServeHTTP
 

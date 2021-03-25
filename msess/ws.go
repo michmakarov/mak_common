@@ -2,8 +2,8 @@ package msess
 
 import (
 	//"bytes"
-	"container/list"
-	"context"
+	//"container/list"
+	//"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -27,12 +27,6 @@ type WsMess map[string]string
 // Send pings to peer with this period. Must be less than pongWait.
 var PingPeriod time.Duration = (PongWait * 9) / 10
 var inWsMessChan chan WsMess //All agents sends here incoming message
-
-type sessActivityHTTP struct {
-	reqCount int64 //The counter of incoming requests. It containes not dane requests.
-	//maxNotDone int
-	notDone *list.List
-}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  4096,
@@ -80,7 +74,7 @@ func (a *Agent) readPump() {
 			}
 		}
 		if mesType == websocket.BinaryMessage {
-			err = fmt.Sprintf("From tag=%v;user=%v binary data was received")
+			err = fmt.Errorf("From tag=%v;user=%v binary data was received")
 		}
 
 		inWsMessChan <- inwm
@@ -93,7 +87,7 @@ func (a *Agent) readPump() {
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
 func (a *Agent) writePump() {
-
+	//var byteMess []byte
 	ticker := time.NewTicker(PingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -117,19 +111,24 @@ func (a *Agent) writePump() {
 
 			w, err := a.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
-				return
+				panic(fmt.Sprintf("(a *Agent) writePump(): a.conn.NextWriter err=%v", err.Error()))
 			}
-			w.Write(message)
+
+			if byteMess, err := json.Marshal(message); err != nil {
+				panic(fmt.Sprintf("(a *Agent) writePump(): json.Marshal(message) err=%v", err.Error()))
+			} else {
+				w.Write(byteMess)
+			}
 
 			if err := w.Close(); err != nil {
-				return
+				panic(fmt.Sprintf("(a *Agent) writePump(): w.Close() err=%v", err.Error()))
 			}
 		case <-ticker.C:
 			//c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			//c.conn.SetWriteDeadline(zeroTime) //no deadline
-			pingMess := fmt.Sprintf(" from user %v", c.User_ID)
-			if c.conn != nil {
-				if err := c.conn.WriteMessage(websocket.PingMessage, []byte(pingMess)); err != nil {
+			pingMess := fmt.Sprintf(" from user %v", a.UserId)
+			if a.conn != nil {
+				if err := a.conn.WriteMessage(websocket.PingMessage, []byte(pingMess)); err != nil {
 					return
 				}
 			}

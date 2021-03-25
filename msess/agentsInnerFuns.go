@@ -76,6 +76,30 @@ func is_registered(data interface{}) (res MonitorResult) {
 	return
 }
 
+//210325 05:28
+func where_user(data interface{}) (res MonitorResult) {
+	var userId string
+	var ok bool
+	var a Agent
+	if userId, ok = data.(string); !ok {
+		panic("user is_registered: Given data is not converted to string (tag)")
+	}
+	for _, item := range agents {
+		if item.UserId == userId {
+			a = Agent{}
+			a.RegTime = item.RegTime
+			a.RemoteAddress = item.RemoteAddress
+			a.UserAgent = item.UserAgent
+			a.Tag = item.Tag
+			a.UserId = item.UserId
+			a.conn = item.conn
+			res.Data = &a
+			return
+		}
+	}
+	return
+}
+
 //FindAgentByTag returns nil if the searching is not successful.
 func findAgentByTag(tag string) (agent *Agent) {
 	for ind, item := range agents {
@@ -129,5 +153,5 @@ func sendToWs(data interface{}) (res MonitorResult) {
 }
 
 func doInWsMess(wsInMess WsMess) {
-
+	panic("doInWsMess is not realized yet.")
 }

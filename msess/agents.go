@@ -93,6 +93,8 @@ func agentsMonitor() {
 				mR = is_registered(mQ.Data)
 			case "send_to_ws":
 				mR = sendToWs(mQ.Data)
+			case "where_user":
+				mR = where_user(mQ.Data)
 			default:
 				mR.Err = fmt.Errorf("agentsMonitor: illegal action (%v) of a query", mQ.Action)
 			} //switch
@@ -112,7 +114,9 @@ func unregAgent(a *Agent) (err error) {
 	}
 	mqChan <- mQ
 	mR = <-mQ.ResultChan
-
+	if mR.Err == nil {
+		sendNoteAboutUnregister(a)
+	}
 	return mR.Err
 }
 
@@ -171,15 +175,37 @@ func agentRegistered(cd *SessCookieData, r *http.Request) (a *Agent, err error) 
 
 forgedAgent:
 	err = fmt.Errorf("agentRegistered: forgeded agent: %v", forgedMess)
-	sendNoteAboutUnregister(err.Error())
+	sendNoteAboutUnregister(a)
 	unregAgent(a)
 	a = nil
 	return
 }
 
+//210325 06:27 This returns copy of the agent where agent.UserId==userId or nil
+func whereUser(userId string) (a *Agent) {
+	var mQ MonitorQuery = MonitorQuery{"where_user", userId, make(chan MonitorResult)}
+	var mR MonitorResult
+	var ok bool
+	var forgedMess string
+
+	if !MsessRuns() {
+		panic("Agent unregister: MSess does not run")
+	}
+	mqChan <- mQ
+	mR = <-mQ.ResultChan
+	if mR.Err != nil {
+		err = mR.Err
+		return
+	}
+	if a, ok = mR.Data.(*Agent); !ok {
+		panic("userRegistered: data returned from is_registered is not converted to *Agent")
+	}
+	return
+}
+
 //210319 13:50
 //SendMessToAgent makes copy of mess and send it to monitor
-func SendMessToAgent(mess WsMess) (err error) {
+func sendMessToAgent(mess WsMess) (err error) {
 	var messCopy WsMess
 	if messCopy, err = makeCopyAndCheck(mess); err != nil {
 		return
@@ -243,14 +269,7 @@ type SessConfigParams struct {
 	HurryForbidden bool
 }
 
-func MsessRuns() bool {
-	if server != nil {
-		return true
-	}
-	return false
-}
-
-func sendNoteAboutUnregister(mess string) {
+func sendNoteAboutUnregister(a *Agent) {
 	panic("The sendNoteAboutUnregister has not been realized yet.")
 }
 
@@ -260,11 +279,7 @@ func calcHTTPResponse(reqNum int64, a *Agent, w http.ResponseWriter, r *http.Req
 		ulr   *userLogRecord
 		start string
 		begin = time.Now()
-		//dur          time.Duration
-		ip, port     string
-		user_id, tag string
-		recId        string //idendifier of a record in SQLite
-		chr          *Chore
+		chr   *Chore
 		//err          error
 	)
 
@@ -272,7 +287,6 @@ func calcHTTPResponse(reqNum int64, a *Agent, w http.ResponseWriter, r *http.Req
 
 	start = begin.Format(timeFormat)
 
-	//kerr.PrintDebugMsg(false, "ServeHTTP_201203_1129", fmt.Sprintf("calcHTTPResponse: before globalNotDone.AddHTTPChore; ulr=%v", ulr))
 	ulr = newUserLogRecord(fmt.Sprintf("%v", reqNum), start, a.UserId, a.Tag, r.RemoteAddr, r.RequestURI, "", "", "")
 
 	chr = globalNotDone.AddHTTPChore(ulr, w, r, cancel)
@@ -281,10 +295,6 @@ func calcHTTPResponse(reqNum int64, a *Agent, w http.ResponseWriter, r *http.Req
 
 	ulr.dur = fmt.Sprintf("%v", time.Now().Sub(begin))
 
-	//kerr.PrintDebugMsg(false, "ServeHTTP_201203_1129", fmt.Sprintf("calcHTTPResponse: after chr.doneChan; dur=%v; chr=%v", dur, chr))
-
-	//calcHTTPResponseMtx.Lock() //Lock ----------------
 	insertUserLogRecord(ulr)
-	//calcHTTPResponseMtx.Unlock() //Unlock ------------------
 
 }
