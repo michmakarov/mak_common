@@ -95,6 +95,8 @@ func agentsMonitor() {
 				mR = sendToWs(mQ.Data)
 			case "where_user":
 				mR = where_user(mQ.Data)
+			case "assign_user":
+				mR = assign_user(mQ.Data)
 			default:
 				mR.Err = fmt.Errorf("agentsMonitor: illegal action (%v) of a query", mQ.Action)
 			} //switch
@@ -124,7 +126,7 @@ func regAgent(a *Agent) (err error) {
 	var mQ MonitorQuery = MonitorQuery{"register", a, make(chan MonitorResult)}
 	var mR MonitorResult
 	if !MsessRuns() {
-		panic("Agent unregister: MSess does not run")
+		panic("regAgent: MSess does not run")
 	}
 	mqChan <- mQ
 	mR = <-mQ.ResultChan
@@ -143,7 +145,7 @@ func agentRegistered(cd *SessCookieData, r *http.Request) (a *Agent, err error) 
 	var forgedMess string
 
 	if !MsessRuns() {
-		panic("Agent unregister: MSess does not run")
+		panic("agentRegistered: MSess does not run")
 	}
 	mqChan <- mQ
 	mR = <-mQ.ResultChan
@@ -154,12 +156,13 @@ func agentRegistered(cd *SessCookieData, r *http.Request) (a *Agent, err error) 
 	if a, ok = mR.Data.(*Agent); !ok {
 		panic("agentRegistered: data returned from is_registered is not converted to *Agent")
 	}
-	if a.UserId != cd.UserId {
-		forgedMess = fmt.Sprintf("not equal a.UserId==%v;cd.UserId==%v", a.UserId, cd.UserId)
-		goto forgedAgent
-	} else {
-		return
-	}
+	//if a.UserId != cd.UserId {
+	//	forgedMess = fmt.Sprintf("not equal a.UserId==%v;cd.UserId==%v", a.UserId, cd.UserId)
+	//	goto forgedAgent
+	//} else {
+	//	return
+	//}
+
 	if a.RemoteAddress != r.RemoteAddr {
 		forgedMess = fmt.Sprintf("not equal a.RemoteAddress==%v;r.RemoteAddr==%v", a.RemoteAddress, r.RemoteAddr)
 		goto forgedAgent
@@ -178,6 +181,33 @@ forgedAgent:
 	sendNoteAboutUnregister(a)
 	unregAgent(a)
 	a = nil
+	return
+}
+
+//210326 04:17
+//Let's agent is some item into agents
+//Then this function assigns agent.UserId==userId where agent.Tag=a.Tag
+//It causes panics through func assign_user:
+//if initially agent.UserId != "" or there is not such agent into registry.
+func assignUser(a *Agent, userId string) {
+	var mQ MonitorQuery = MonitorQuery{"assign_user", a, make(chan MonitorResult)}
+	var mR MonitorResult
+	var ok bool
+	var forgedMess string
+
+	if !MsessRuns() {
+		panic("assignUser: MSess does not run")
+	}
+	a.UserId = userId //!!!
+	mqChan <- mQ
+	mR = <-mQ.ResultChan
+	if mR.Err != nil {
+		err = mR.Err
+		return
+	}
+	if a, ok = mR.Data.(*Agent); !ok {
+		panic("userRegistered: data returned from is_registered is not converted to *Agent")
+	}
 	return
 }
 
@@ -276,10 +306,10 @@ func sendNoteAboutUnregister(a *Agent) {
 //
 func calcHTTPResponse(reqNum int64, a *Agent, w http.ResponseWriter, r *http.Request, cancel context.CancelFunc) {
 	var (
-		ulr   *userLogRecord
-		start string
-		begin = time.Now()
-		chr   *Chore
+		ulr      *userLogRecord
+		start    string
+		begin    = time.Now()
+		doneChan chan struct{}
 		//err          error
 	)
 
@@ -289,9 +319,9 @@ func calcHTTPResponse(reqNum int64, a *Agent, w http.ResponseWriter, r *http.Req
 
 	ulr = newUserLogRecord(fmt.Sprintf("%v", reqNum), start, a.UserId, a.Tag, r.RemoteAddr, r.RequestURI, "", "", "")
 
-	chr = globalNotDone.AddHTTPChore(ulr, w, r, cancel)
+	doneChan = globalNotDone.addHTTPChore(ulr, w, r, cancel)
 
-	<-chr.doneChan
+	<-doneChan
 
 	ulr.dur = fmt.Sprintf("%v", time.Now().Sub(begin))
 

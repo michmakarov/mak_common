@@ -15,8 +15,8 @@ const AgentCookieName = "agent_cookie_210304"
 //it is a session cookie value in its natural state before encoding
 //It is subset of Agent type's fields
 type SessCookieData struct {
-	Tag    string //a unique tag that identifies the agent
-	UserId string // "" means that no user currently enters the system
+	Tag string //a unique tag that identifies the agent
+	//UserId string // "" means that no user currently enters the system
 }
 
 //var cookieHandler *securecookie.SecureCookie

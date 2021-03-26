@@ -25,9 +25,8 @@ and through wich a <a href="#USER">USER</a> performs all business tasks for that
 </p>
 <p>
 It is important to see that <a href="#AGENT">AGENT</a> is not a program (for example, a browser) on some host
-that the some person starts
-with perpose to do some business tasks. Through the program he but runs the functionality
-that was obtained with the index page.
+that the some person starts with perpose to do some business tasks. Through the program he runs the functionality
+which is called agent.
 </p>
 <p>
 An <a href="#AGENT">AGENT</a> is a part of the -SYSTEM-. As such it cannot be arbitrary dispite theoretical ability to perform
@@ -54,7 +53,8 @@ This assumes terms of "http server", "http client" in their common mean.
     An USER interacts with SYSTEM through an <a href="#AGENT">AGENTs</a> and through only the AGENT.
     The first task that USER can perform into SYSTEM is proving his authority, that is login.
     His last task is announcement of end of his work, that is logout.<br>
-    This last task causes destroying of the AGENT. That is an AGENT can serve only one USER.
+    This last task causes destroying of the AGENT. That is an AGENT can serve only one USER.<b>
+    Into the <a href="#SYSTEM">SYSTEM</a>, a USER is identified by not negative integer, for example 0, 1, 2 ...  
 	</p>
 	<p id="SYSTEM">--SYSTEM<br>
 		The SYSTEM is program device through which a <a href="#USER">USERs</a> cam perform some set of their business tasks. 
@@ -75,6 +75,25 @@ This assumes terms of "http server", "http client" in their common mean.
     asks the system to do some action. In general, a finite user interacts with any system through some interface and functions,
     which this interface admitted to launch. An AGENT, in distinguish of that general case, must to give the server testimony
     that it was developed intentionally as a part of the system.<br>
+    The server keeps the registry of agents in which an agent is represent by a record of next structure.<br>
+    <pre>
+    type Agent struct {
+	RegTime time.Time //The moment of registration;
+
+	RemoteAddress string //A remote address of a http client.
+	UserAgent     string //A description of the http client.
+  //Names last two fields are as names of correspondent headers of a http request.
+
+	//The next two fields gives content of the agent's coocie
+	Tag    string //a unique tag that identifies the agent
+	UserId string //A <a href="#USER">USER</a> identifier.
+  // "" means that no user currently enters the system
+  //After assigning some value, it cannot be changed.
+
+	conn  *websocket.Conn
+	WsOut chan WsMess
+}
+    </pre>
     See also <a href="#SYSTEM">SYSTEM</a>, <a href="#SERVER">SERVER</a>), <a href="#INTRODUCTION">INTRODUCTION</a>,
     and <a href="#INDEX_REQUEST">INDEX REQUEST</a>
 	</p>

@@ -96,13 +96,7 @@ func login(w http.ResponseWriter, r *http.Request, a *Agent) {
 				}
 			}
 
-			if err = assignUser(a.Tag, userId); err != nil {
-				mess := fmt.Sprintf("error of assigning user=%v; agent=%v", err.Error(), a.Tag)
-				kerr.SysErrPrintf(mess)
-				sendResult(500, mess)
-				return
-				//panic(fmt.Sprintf("error of assigning user to agent: %v", err.Error()))
-			}
+			assignUser(a, userId)
 
 		} else { //errMess != ""
 			sendResult(400, fmt.Sprintf("checking credentials of user %v is fault with message %v", loginFormValue, errMess))
@@ -114,16 +108,8 @@ func login(w http.ResponseWriter, r *http.Request, a *Agent) {
 
 } //login
 
-//see note 201209 _______14:16 (Like loginpost)
-//
-//201209 15:26 The big principle: Not doubling info! (it is about if _, cookData, err = getSession(r);)
-//func logout(w http.ResponseWriter, r *http.Request, cookData sessCookieData, cln *sessClient) {
+//210326 17:19
 func logout(w http.ResponseWriter, r *http.Request, a *Agent) {
-	var (
-		//anicCode int = 500 //181228 400 or 500 For what cause is the panic?
-		cookData sessCookieData
-		mess     string
-	)
 	var sendResult = func(code int, mess string) { //see 201209 06:48 note
 		mess = "Exit from session: " + mess
 		w.Header().Add("Content-Type", "text/plain; charset=utf-8")
@@ -143,16 +129,12 @@ func logout(w http.ResponseWriter, r *http.Request, a *Agent) {
 		}
 	}()
 
-	if !KsessRuns() {
-		panic("The ksess system is not run")
+	if !MsessRuns() {
+		panic("The msess system is not run")
 	}
 
-	if _, cookData, err = getSession(r); err != nil {
-		panic("getting session parameters: getSession(r) returns err!=nil")
-	}
-
-	if cookData.UserID < 0 { //the session does not exist
-		sendResult(400, fmt.Sprintf("the session DOES NOT EXIST (user_id=%v; tag=%v)", cookData.UserID, cookData.Tag))
+	if a.UserId == "" { //the session does not exist
+		sendResult(400, fmt.Sprintf("A user was not assignes to; tag=%v", a.Tag))
 	}
 
 	switch r.Method {

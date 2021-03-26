@@ -59,7 +59,10 @@ May be Server.ErrorLog gives it.
 <br>210324 11:24
 The truth that I have understanded very recently: mutexes gard code but not data.
 So if you desire to gard data you must guarantee that only one function has access to it (for changing!).
-And so the not_done_global_storage must will be remade.<br>
+And so the not_done_global_storage must will be remade.
+<br>!!! 210326 16:44
+I decide that the agent cookie should contain only a tag.
+It simplifies all not only but more corresponds the matter! 
 <br>---
 Результаты:<br>---
 Предложение к следующей версии:<br>---

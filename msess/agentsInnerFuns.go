@@ -100,6 +100,33 @@ func where_user(data interface{}) (res MonitorResult) {
 	return
 }
 
+//210326 06:11
+func assign_user(data interface{}) (res MonitorResult) {
+	var userId string
+	var ok bool
+	var a *Agent
+	var item *Agent
+	if a, ok = data.(*Agent); !ok {
+		panic("assign_user: Given data is not converted to *Agent")
+	}
+	for _, item = range agents {
+		if item == a {
+			panic("assign_user: item==a")
+		}
+		if item.Tag == a.Tag {
+			if item.UserId != "" {
+				panic("assign_user: item.UserId !=\"\"")
+			}
+			item.UserId = a.UserId
+			return
+		}
+	}
+	if item == nil {
+		panic("assign_user: no such agent")
+	}
+	return
+}
+
 //FindAgentByTag returns nil if the searching is not successful.
 func findAgentByTag(tag string) (agent *Agent) {
 	for ind, item := range agents {

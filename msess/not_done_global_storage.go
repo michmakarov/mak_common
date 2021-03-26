@@ -15,12 +15,13 @@ import (
 	"time"
 )
 
-var globalNotDone = &GlobalNotDone{}
+var globalNotDone = *GlobalNotDone // it is received a vulue from func initGlobalNotDone()
 
 type GlobalNotDone struct {
-	count        int64 //Counter of all chores that have been in the storage: that those had been performed and mayby been removed as well that those are performing
-	addChoreChan chan *Chore
-	notDone      *list.List
+	count         int64 //Counter of all chores that have been in the storage: that those had been performed and mayby been removed as well that those are performing
+	addChoreChan  chan *Chore
+	cancelAllChan chan *Agent //210326 18:33 It cancels all where Chore.ulr.tag==Agent.Tag
+	notDone       *list.List  //of *Chore
 }
 
 //A value of type "chore" is registration record of some work (a chore as it is named here)
@@ -56,11 +57,12 @@ type Chore struct {
 func initGlobalNotDone() {
 	globalNotDone = &GlobalNotDone{}
 	globalNotDone.addChoreChan = make(chan *Chore)
+	globalNotDone.cancelAllChan = make(chan *Agent)
 	globalNotDone.notDone = list.New()
 	go globalNotDone.run()
 }
 
-//This cleans the storage from chores that have its flag of notKeep = true
+//
 func (gnd *GlobalNotDone) run() {
 	var i int64
 	for {
@@ -70,6 +72,9 @@ func (gnd *GlobalNotDone) run() {
 		select {
 		case newChore := <-gnd.addChoreChan:
 			gnd.notDone.PushBack(newChore)
+			gnd.count++
+		case a := <-gnd.cancelAll:
+			gnd.cancelAll(a)
 		default: //go on
 		}
 		for e := gnd.notDone.Front(); e != nil; e = e.Next() { //scaning the list
@@ -85,7 +90,8 @@ func (gnd *GlobalNotDone) run() {
 	} //infinite loop
 }
 
-func (gnd *GlobalNotDone) AddHTTPChore(ulr *userLogRecord, w http.ResponseWriter, r *http.Request, cancel context.CancelFunc) (chrPtr *Chore) {
+func (gnd *GlobalNotDone) addHTTPChore(ulr *userLogRecord, w http.ResponseWriter,
+	r *http.Request, cancel context.CancelFunc) (dc chan struct{}) {
 	var newChore Chore
 	newChore.cancel = cancel
 	newChore.ulr = ulr
@@ -101,7 +107,7 @@ func (gnd *GlobalNotDone) AddHTTPChore(ulr *userLogRecord, w http.ResponseWriter
 		reqMultiplexer.ServeHTTP(w, r)
 	}()
 	gnd.addChoreChan <- &newChore
-	return &newChore
+	return newChore.doneChan
 }
 
 //What kind can a chore be in general? It is defined by properties of its ulr
@@ -113,3 +119,8 @@ func (gnd *GlobalNotDone) AddHTTPChore(ulr *userLogRecord, w http.ResponseWriter
 //func (gnd *GlobalNotDone) StringMBD(nl string) string {
 
 //190124
+
+//210326 17:35
+func cancelChores(a *Agent) {
+
+}

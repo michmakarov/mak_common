@@ -171,7 +171,8 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	//3. Now there is some agent and we can wait "/ws", "/login", "logout"
+	//3. Now there is a agent and we can wait "/ws", "/login", "logout"
+	//The agent is a copy of the registry record. So it admits any manipulates with it.
 	switch r.URL.Path {
 	case "/ws":
 		serveWs(w, r, agent)
