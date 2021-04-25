@@ -102,7 +102,7 @@ func where_user(data interface{}) (res MonitorResult) {
 
 //210326 06:11
 func assign_user(data interface{}) (res MonitorResult) {
-	var userId string
+	//var userId string
 	var ok bool
 	var a *Agent
 	var item *Agent
@@ -122,7 +122,7 @@ func assign_user(data interface{}) (res MonitorResult) {
 		}
 	}
 	if item == nil {
-		panic("assign_user: no such agent")
+		panic("assign_user: no such agent; Tag="+a.Tag)
 	}
 	return
 }

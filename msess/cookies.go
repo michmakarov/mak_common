@@ -28,7 +28,7 @@ var cookieHandler = securecookie.New(securecookie.GenerateRandomKey(64), securec
 //210305 07:57
 //210316 13:40 Yes, it does not send. So it is a function that may be called only in a defined place.
 //And the name of setAgentSession is not fire. Let it be setCookieDate
-func setCookieDate(cookieData SessCookieData, w http.ResponseWriter) (err error) {
+func setCookieData(cookieData SessCookieData, w http.ResponseWriter) (err error) {
 	var (
 		encoded string
 		cookie  = http.Cookie{

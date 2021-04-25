@@ -3,7 +3,7 @@ package msess
 
 import (
 	"fmt"
-	//"mak_common/kerr"
+	"mak_common/kerr"
 
 	//"os"
 	//"strings"
@@ -12,7 +12,8 @@ import (
 
 //checkUserCredentailsEnv and other functions with suffix "Env" are
 //envelopes for a programer's callback functions
-func checkUserCredentailsEnv(userLogName, userPassword string) (user_id int, account, errMess string) {
+//func checkUserCredentailsEnv(userLogName, userPassword string) (user_id int, account, errMess string) {
+func checkUserCredentailsEnv(userLogName, userPassword string) (account, errMess string) {
 	type Result struct {
 		user_id int
 		account string
@@ -24,17 +25,27 @@ func checkUserCredentailsEnv(userLogName, userPassword string) (user_id int, acc
 		var user_id int
 		var errMess string
 
-		//kerr.PrintDebugMsg(false, "DFLAG201224_07:09", fmt.Sprintf("checkUserCredentailsEnv: before calling"))
-		user_id, account, errMess = checkUserCredential(userLogName, userPassword)
+		defer func() {
+			var rec interface{}
+			if rec = recover(); rec != nil {
+				errMess = kerr.GetRecoverErrorText(rec)
+			}
+			resChan <- Result{user_id, account, errMess}
+		}()
 
-		resChan <- Result{user_id, errMess}
+		//kerr.PrintDebugMsg(false, "DFLAG201224_07:09", fmt.Sprintf("checkUserCredentailsEnv: before calling"))
+		//user_id, account, errMess = checkUserCredential(userLogName, userPassword)
+		account, errMess = checkUserCredential(userLogName, userPassword)
+
+		//resChan <- Result{user_id, account, errMess}
 	}
 
 	go exec()
 
 	select {
 	case res = <-resChan:
-		user_id = res.user_id
+		//user_id = res.user_id
+		account = res.account
 		errMess = res.errMess
 		//kerr.PrintDebugMsg(false, "DFLAG201224_07:09", fmt.Sprintf("checkUserCredentailsEnv: case res (%v--%v)", user_id, errMess))
 		return

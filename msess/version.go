@@ -1,29 +1,23 @@
-//200311 16:53 It is a new attempt to wrought a common approach to versioning of my golang projects
+//210311 16:53 It is a new attempt to wrought a common approach to versioning of my golang projects
 //As it seems to me maintaining history files (or diarys) is well.
 //But it will be better to combine versioning ang diarying.
+//210422 06:32 Under
 package msess
 
-//"fmt"
-//"strconv"
-
-var git_data = "yet no git data"
-
-type VersionDescr struct {
-	Number             string //Version number is a string of format "190926", that is "<Year><Month><Day>"
-	ProgName           string //
-	Commit_branch_time string // The time is last time of launch the tgh.sh
-	VersionState       string //= "developing" How to do that it be filled automaticlly?
-	Text               string
-}
+import (
+	//"fmt"
+	"mak_common/mversion"
+	//"strconv"
+)
 
 //versinList defines VersionDescr for each version that has been occured
 //Current version has index 0, previous one - index 1, and so on.
-var versionList = []VersionDescr{
-	{"210311", "msess", git_data, "developing", blabla_210311},
+var versionList = mversion.VersionList{
+	{"mak_common.msess", "nv no env", blabla_210311},
 }
 
 func GetCurrVerInfo() string {
-	return versionList[0].Text
+	return versionList.GetCurrVerInfo()
 }
 
 func GetCurrVer() string {
@@ -39,8 +33,8 @@ Plan:<br>---
 Developer_notes:<br>
 This is the first version of msess; see history.txt, record 210311 16:30
 <br>210311 17:36 Current problem.
-The index request is a intercepted one, so the answer to it must be wholy controlled by this packet.
-In other hand, an application programmer should have ability to define his own html and js.
+The index request is a intercepted one, so the response to it must be wholy controlled by this package.
+In other hand, an application programmer should have ability to define his own HTML and JS.
 What to do? To send only js!!??
 <br> 210312 14:17
 As all last pondering show the idea of AGENT have sense only for single page application.
@@ -62,7 +56,11 @@ So if you desire to gard data you must guarantee that only one function has acce
 And so the not_done_global_storage must will be remade.
 <br>!!! 210326 16:44
 I decide that the agent cookie should contain only a tag.
-It simplifies all not only but more corresponds the matter! 
+It simplifies all not only but more corresponds the matter!<br>!!!
+210331 06:31
+I have delayed the msess and the 210224_rels because I now in some concept quagmire with the msess.
+Or, maybe, the openVPN does not give calm and peace but itch. So I will plunge thoroughly into the openVPN  <br>
+210419 I am here again. <br>
 <br>---
 Результаты:<br>---
 Предложение к следующей версии:<br>---

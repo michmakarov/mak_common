@@ -44,8 +44,8 @@ var upgrader = websocket.Upgrader{
 //
 func (a *Agent) readPump() {
 	var inwm WsMess = make(map[string]string)
-	var errVal string
-	var err error
+	//var errVal string
+	//var err error
 
 	defer func() {
 		a.conn.Close()
@@ -76,7 +76,9 @@ func (a *Agent) readPump() {
 		if mesType == websocket.BinaryMessage {
 			err = fmt.Errorf("From tag=%v;user=%v binary data was received")
 		}
-
+		if err = json.Unmarshal(message, inwm); err != nil {
+			inwm["err"] = "readPump():a bad message was received, err=" + err.Error()
+		}
 		inWsMessChan <- inwm
 	}
 }

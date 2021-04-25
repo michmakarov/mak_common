@@ -136,8 +136,9 @@ func regAgent(a *Agent) (err error) {
 
 //210316 16:36
 //It returns err!=nil
-//or the agent's (a) data is not corresponded the data of request (r)
-//If err==nil the a is a copy of a agents[registered *Agent]
+//if no agent registered with agent.Tag=cd.Tag
+//or if there is such agent but the obtained current cookie is forged
+//If err==nil the a is a copy of a registered *Agent
 func agentRegistered(cd *SessCookieData, r *http.Request) (a *Agent, err error) {
 	var mQ MonitorQuery = MonitorQuery{"is_registered", cd, make(chan MonitorResult)}
 	var mR MonitorResult
@@ -156,12 +157,6 @@ func agentRegistered(cd *SessCookieData, r *http.Request) (a *Agent, err error) 
 	if a, ok = mR.Data.(*Agent); !ok {
 		panic("agentRegistered: data returned from is_registered is not converted to *Agent")
 	}
-	//if a.UserId != cd.UserId {
-	//	forgedMess = fmt.Sprintf("not equal a.UserId==%v;cd.UserId==%v", a.UserId, cd.UserId)
-	//	goto forgedAgent
-	//} else {
-	//	return
-	//}
 
 	if a.RemoteAddress != r.RemoteAddr {
 		forgedMess = fmt.Sprintf("not equal a.RemoteAddress==%v;r.RemoteAddr==%v", a.RemoteAddress, r.RemoteAddr)
@@ -178,27 +173,34 @@ func agentRegistered(cd *SessCookieData, r *http.Request) (a *Agent, err error) 
 
 forgedAgent:
 	err = fmt.Errorf("agentRegistered: forgeded agent: %v", forgedMess)
-	sendNoteAboutUnregister(a)
 	unregAgent(a)
+	sendNoteAboutUnregister(a)
 	a = nil
 	return
 }
 
+//210330 11:48
+//The parameter "userId" is apparently excessive. So:
+//The "a" must not point to some item of agents but there must be the item with item.Tag==a.Tag; item.UserId==""
+//The function does not return any errors but it panics if something is not as it expects.
+//See func assign_user(data interface{}) (res MonitorResult)
+//The question on 210330 12:43: Must it check for forging of the a?
 //210326 04:17
 //Let's agent is some item into agents
 //Then this function assigns agent.UserId==userId where agent.Tag=a.Tag
 //It causes panics through func assign_user:
 //if initially agent.UserId != "" or there is not such agent into registry.
-func assignUser(a *Agent, userId string) {
+//func assignUser(a *Agent, userId string) {
+func assignUser(a *Agent) {
 	var mQ MonitorQuery = MonitorQuery{"assign_user", a, make(chan MonitorResult)}
 	var mR MonitorResult
 	var ok bool
-	var forgedMess string
+	//var forgedMess string
 
 	if !MsessRuns() {
 		panic("assignUser: MSess does not run")
 	}
-	a.UserId = userId //!!!
+	//a.UserId = userId //!!!
 	mqChan <- mQ
 	mR = <-mQ.ResultChan
 	if mR.Err != nil {
@@ -216,7 +218,7 @@ func whereUser(userId string) (a *Agent) {
 	var mQ MonitorQuery = MonitorQuery{"where_user", userId, make(chan MonitorResult)}
 	var mR MonitorResult
 	var ok bool
-	var forgedMess string
+	//var forgedMess string
 
 	if !MsessRuns() {
 		panic("Agent unregister: MSess does not run")
@@ -306,10 +308,10 @@ func sendNoteAboutUnregister(a *Agent) {
 //
 func calcHTTPResponse(reqNum int64, a *Agent, w http.ResponseWriter, r *http.Request, cancel context.CancelFunc) {
 	var (
-		ulr      *userLogRecord
-		start    string
-		begin    = time.Now()
-		doneChan chan struct{}
+		ulr       *userLogRecord
+		start     string
+		begin     = time.Now()
+		doneChan2 chan *userLogRecord
 		//err          error
 	)
 
@@ -317,13 +319,15 @@ func calcHTTPResponse(reqNum int64, a *Agent, w http.ResponseWriter, r *http.Req
 
 	start = begin.Format(timeFormat)
 
+	//1        					2      3        4    5     6    7    8     9
+	//reqNum, 					start, user_id, tag, addr, url, dur, code, extraInfo
 	ulr = newUserLogRecord(fmt.Sprintf("%v", reqNum), start, a.UserId, a.Tag, r.RemoteAddr, r.RequestURI, "", "", "")
 
-	doneChan = globalNotDone.addHTTPChore(ulr, w, r, cancel)
+	doneChan2, err = globalNotDone.addHTTPChore(ulr, w, r, cancel)
 
-	<-doneChan
+	ulr = <-doneChan2 //here we can and most likely will receive a pointer not that that was sent to the addHTTPChore
 
-	ulr.dur = fmt.Sprintf("%v", time.Now().Sub(begin))
+	//ulr.dur = fmt.Sprintf("%v", time.Now().Sub(begin))
 
 	insertUserLogRecord(ulr)
 

@@ -8,24 +8,26 @@ import (
 	//"mak_common/kutils"
 
 	//"math/rand"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
 	//"time"
 )
 
-//
-
+//210330 05:16
 func login(w http.ResponseWriter, r *http.Request, a *Agent) {
 	var (
 		err     error
+		ok      bool
 		errMess string
 
 		loginFormValue string
 		passFormValue  string
 		user_id        int
 		userId         string
-		account        string
+		accountMap     map[string]string
+		account        string //210330 05:39 json text that will be sent if no err
 		existAgent     *Agent
 	)
 	var sendResult = func(code int, mess string) {
@@ -52,13 +54,13 @@ func login(w http.ResponseWriter, r *http.Request, a *Agent) {
 	}
 
 	if checkUserCredential == nil {
-		panic("no checkUserCredential function")
+		panic("msess.login:no checkUserCredential function")
 	}
 	switch strings.ToUpper(r.Method) {
 	case "POST", "GET":
 		//kerr.PrintDebugMsg(false, "DFLAG201223_14:45", fmt.Sprintf("loginpost:M=%v contType=%v", r.Method, r.Header.Values("Content-Type")))
 		if err = r.ParseForm(); err != nil {
-			panic(fmt.Sprintf("Error of r.ParseForm(): %v", err.Error()))
+			panic(fmt.Sprintf("msess.login:Error of r.ParseForm(): %v", err.Error()))
 		}
 
 		if a.UserId != "" {
@@ -77,14 +79,24 @@ func login(w http.ResponseWriter, r *http.Request, a *Agent) {
 			return
 		}
 
-		user_id, account, errMess = checkUserCredentailsEnv(loginFormValue, passFormValue)
+		account, errMess = checkUserCredentailsEnv(loginFormValue, passFormValue)
 
 		if errMess == "" { //Success of checking credentials
-			if user_id < 0 {
-				sendResult(400, fmt.Sprint("user_id = %v < 0 (login = %v)", user_id, loginFormValue))
+			if err = json.Unmarshal([]byte(account), accountMap); err != nil {
+				sendResult(500, fmt.Sprint("But account (login = %v):%v", loginFormValue, err.Error()))
 				return
-			} else {
-				userId = strconv.Itoa(user_id)
+			}
+			if userId, ok = accountMap["iserId"]; !ok {
+				sendResult(500, fmt.Sprint("But account (login = %v): no key of \"userId\"", loginFormValue))
+				return
+			}
+			if user_id, err = strconv.Atoi(userId); err != nil {
+				sendResult(500, fmt.Sprint("But account (login = %v): err of converting \"userId\" to int=%v", loginFormValue, err.Error()))
+				return
+			}
+			if user_id < 0 {
+				sendResult(500, fmt.Sprint("But account (login = %v): userId(%v)<0", loginFormValue, user_id))
+				return
 			}
 
 			if existAgent = whereUser(userId); existAgent != nil {
@@ -96,7 +108,10 @@ func login(w http.ResponseWriter, r *http.Request, a *Agent) {
 				}
 			}
 
-			assignUser(a, userId)
+			a.UserId = userId //210330 12:47
+			assignUser(a)
+			sendResult(200, account)
+			return
 
 		} else { //errMess != ""
 			sendResult(400, fmt.Sprintf("checking credentials of user %v is fault with message %v", loginFormValue, errMess))
@@ -110,6 +125,8 @@ func login(w http.ResponseWriter, r *http.Request, a *Agent) {
 
 //210326 17:19
 func logout(w http.ResponseWriter, r *http.Request, a *Agent) {
+	var err error
+	var mess string
 	var sendResult = func(code int, mess string) { //see 201209 06:48 note
 		mess = "Exit from session: " + mess
 		w.Header().Add("Content-Type", "text/plain; charset=utf-8")
@@ -135,26 +152,23 @@ func logout(w http.ResponseWriter, r *http.Request, a *Agent) {
 
 	if a.UserId == "" { //the session does not exist
 		sendResult(400, fmt.Sprintf("A user was not assignes to; tag=%v", a.Tag))
+		return
 	}
 
 	switch r.Method {
 	case "GET":
-		count := GetCountOfPerformingChoresOfUser(strconv.Itoa(cookData.UserID))
-		hub.unregisterSess(cookData.UserID)
-		clearSession(w)
-		clearLogErrCookie(w)
-		if count > 0 {
-			mess = fmt.Sprintf("The session of %v has been ended\n", cookData.UserID)
-			mess = mess + fmt.Sprintf("%v requests have been remaining in pergorming", count)
-			sendResult(200, mess)
-		} else {
-			mess = fmt.Sprintf("The session of %v has been ended\n", cookData.UserID)
-			mess = mess + fmt.Sprintf("no requests have been remaining in pergorming")
-			sendResult(200, mess)
+		//count := GetCountOfPerformingChoresOfUser(strconv.Itoa(cookData.UserID))
+		if err = unregAgent(a); err != nil { //the session does not exist
+			sendResult(400, fmt.Sprintf("error=%v", err.Error()))
+			return
 		}
 	default:
 		mess = fmt.Sprintf("allowed only GET method")
 		sendResult(400, mess)
+		return
 	}
 
+	mess = fmt.Sprintf("Agent successfully unregistered; tag=%v; user=%v", a.Tag, a.UserId)
+	sendResult(200, mess)
+	return
 }

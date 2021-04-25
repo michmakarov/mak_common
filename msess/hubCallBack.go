@@ -57,7 +57,9 @@ type URLPathChecker func(path string) bool
 type ExtractUsers func(answer map[string]string) (users []int)
 
 //see api.html
-type CheckUserCredential func(userLogName, userPassword string) (user_id int, account, errMess string)
+//type CheckUserCredential func(userLogName, userPassword string) (user_id int, account, errMess string)
+//210330 05:47 the account is a json text that can be converted to map[string]string with, at least, a key "userId"
+type CheckUserCredential func(userLogName, userPassword string) (account, errMess string)
 
 //type GetInitData func(user_id int) (data interface{}, err error)
 

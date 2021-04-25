@@ -157,18 +157,24 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	//2. to check agent coockie and getting the current agent
 	if cD, err = getCookieData(r); err != nil {
-		if agent, err = agentRegistered(cD, r); err != nil { //no agent (or it was forgeded)
-			if r.URL.Path == "/" { //the http client will be given a new agent
-				WriteToLog("accepted")
-				indexHandler(w, r)
-				return
-			} else { //no agent: all requests excluding "/" are forbidden
-				clientErrMess = fmt.Sprintf("getCookieData: no agent err=%v\n", err.Error())
-				clientErrCode = 403
-				goto exitOnErr
-			}
+		//if agent, err = agentRegistered(cD, r); err != nil { //no agent (or it was forgeded)
+		if r.URL.Path == "/" { //the http client will be given a new agent
+			WriteToLog("accepted")
+			indexHandler(w, r)
+			return
+		} else { //no agent: all requests excluding "/" are forbidden
+			clientErrMess = fmt.Sprintf("getCookieData: no agent err=%v\n", err.Error())
+			clientErrCode = 403
+			goto exitOnErr
 		}
+		//}
 
+	} else { //
+		if agent, err = agentRegistered(cD, r); err != nil { //no agent (or it was forged and therefore removed)
+			clientErrMess = fmt.Sprintf("getCookieData:agentRegistered: there is already no such agent or the cookie was forged; err=%v\n", err.Error())
+			clientErrCode = 403
+			goto exitOnErr
+		} //else{//The current was obtained}
 	}
 
 	//3. Now there is a agent and we can wait "/ws", "/login", "logout"

@@ -6,17 +6,57 @@
     <head>
         <title>RELS</title>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-		
-</head>
+        <script>
+			var pref="PRE_";
+			function hide_show(el){
+				if (!el) {
+					alert("hide_show: it is not el param.")
+					return
+				}
+				var id = el.id
+				if (!id) {
+					alert("hide_show:The element has not id!")
+					return
+				}
+				if (id.substring(0, pref.length)==pref){
+					var pre_el_id=id
+					var base_el_id = id.substring(pref.length)
+				} else{
+					var base_el_id=id
+					var pre_el_id = pref+id
+				}
+				var pre_el = document.getElementById(pre_el_id);
+				if (!pre_el) {
+					alert("hide_show: no pre element="+ pre_el_id)
+					return
+				}
+				var base_el = document.getElementById(base_el_id);
+				if (!base_el) {
+					alert("hide_show: no base element="+ base_el_id)
+					return
+				}
+				if (base_el.style.display === "none") {
+					base_el.style.display = "block";
+					pre_el.style.display = "none";
+				} else {
+					base_el.style.display = "none";
+					pre_el.style.display = "block";
+				}				
+				//alert("base_el_id="+base_el_id+"\npre_el_id="+pre_el_id)
+				//el.style.backgroundColor = '#A5D9F3';
+			}
+		</script>
+	</head>
 <body> 
 <p>Version=---201216_rels:51d5bee--*main--210222_2108---
 </p>
 <!-- BEGIN -->
-<div id="INTRODUCTION">
+<div id="PRE_INTRODUCTION" onclick="hide_show(this);">  Show INTRODUCTION</div>
+<div id="INTRODUCTION" onclick="hide_show(this);">
 <h3> INTRODUCTION </h3>
 <p>
-The packet msess realized http server for single page application.
-That is the packet assumes that a <a href="#USER">USER</a> (a ultimate user of the <a href="#SYSTEM">SYSTEM</a>) by mean of some program invoked
+The package MSESS implements http server for single page application.
+That is the package assumes that an <a href="#USER">USER</a> (an end user of the <a href="#SYSTEM">SYSTEM</a>) by mean of some program invoked
 the index page (with the path "/") only and only once for duration their interaction with the <a href="#SYSTEM">SYSTEM</a>). 
 </p>
 <p>
@@ -68,7 +108,8 @@ This assumes terms of "http server", "http client" in their common mean.
     Overwise the server answers with code 403. But there are requests that have not to deliver such cookie.
     They are so called out session requests and intercept requests. One of the last, with (relative) URL "/"
     is named <a href="#INDEX_REQUEST">INDEX REQUEST</a>. This request produces new agent
-	</p>
+	</p> <!-- SERVER -->
+	
 	<p id="AGENT">--AGENT<br>
 		An AGENT is a set of functionality and visial elements that realizes a special http client through which an user asks the SYSTEM
     to fulfil some task. That is an AGENT is a unity of a finite user interface and functions through which he can
@@ -96,9 +137,13 @@ This assumes terms of "http server", "http client" in their common mean.
     </pre>
     See also <a href="#SYSTEM">SYSTEM</a>, <a href="#SERVER">SERVER</a>), <a href="#INTRODUCTION">INTRODUCTION</a>,
     and <a href="#INDEX_REQUEST">INDEX REQUEST</a>
-	</p>
+	</p><!-- AGENT -->
+	
+	
   <p id="INDEX_REQUEST">--INDEX_REQUEST<br>
-    An INDEX REQUEST is a request with reletive url "/". It is one of <a href="INTECEPT_REQUESTS">INTECEPT_REQUESTS</a> 
+    An INDEX REQUEST is a request with reletive url "/". It is one of <a href="#INTECEPT_REQUESTS">INTECEPT_REQUESTS</a><br>
+    It registers a new <a href="#AGENT">AGENT</a>  without a <a href="#USER">USER</a> <br>
+    It means that for admitting some <a href="#USER">USER</a> to <a href="#SYSTEM">the SYSTEM</a> it is reqiered a successful request of "/login".
   </p>
 
   <p id="WSMESS">--WSMESS<br>
@@ -122,6 +167,17 @@ This assumes terms of "http server", "http client" in their common mean.
     See <a href="#WSCHAIN">WSCHAIN</a>
   </li>
   </ol> 
+  </p><!-- WSMESS -->
+
+  <p id="INTECEPT_REQUESTS">--INTECEPT_REQUESTS<br>
+    INTECEPT_REQUESTS are those that are handled by the package itself. 
+    That is the application programmer cannot able  to handle the requests : his codes will never be invoked.<br>
+    Those are :
+    <ol>
+		<li> <a href="#INDEX_REQUEST">INDEX REQUEST</a> </li>
+		<li> <a href="#LOGIN_REQUEST">LOGIN REQUEST</a> </li>
+    </ol>
+    
   </p>
 
 
