@@ -10,8 +10,7 @@ import (
 	"net"
 	"net/http"
 	"time"
-
-	"mak_common/kerr"
+	//"mak_common/kerr"
 )
 
 //201214 07:03 see also rels readme.txt 201214_
@@ -50,6 +49,7 @@ type DoInWsMess func(mess map[string]string)
 //It examines a request URL's path to allow doing the request regardless  existing the session
 //see variable checkURLPath and parameter URLCheker of function CreateHub
 //201223 06:15 see also OUTSESSION_REQEST into feeler.go_(f *feeler) ServeHTTP
+//210604 06:56 see definition OUTSESSION_REQEST in msess/rules&terms.html
 type URLPathChecker func(path string) bool
 
 //It takes a result of  the ParserSocket and extracts from it the list of users to which the result must be sent
@@ -141,13 +141,27 @@ func CreateHub(doInWsMess DoInWsMess, //1 may be nill
 		scp.CallBakTimeout = 100
 	}
 
+	//210603 16:51 if len(scp.Loggers) == 0 there are not needs of any logs
+	//if len(scp.Loggers) == 0 { // 210603 06:24
+	//	scp.Loggers = "h" //That is the httpserver log is always created
+	//}
+
+	//kerr.PrintDebugMsg(false, "DFLAG210602-0650", "before *sessCP = *scp")
 	//sessCP = &SessConfigParams{}
-	*sessCP = *scp //setting the global (in the packet) variable
+	//*sessCP = *scp //setting the global (in the packet) variable//210603 16:34 Early this has been worked as it seems but now not!. Why!
+	sessCP = scp
+	//kerr.PrintDebugMsg(false, "DFLAG210602-0650", "after *sessCP = *scp")
 
 	//-------scp
 
+	if err = checkLogDirs(); err != nil {
+		return
+	}
+
+	createHttpserverLog() //210603 09:46
+
 	//201204 07:58
-	if createGeneralLog(); err != nil {
+	if err = createGeneralLog(); err != nil {
 		//kerr.SysErrPrintf("createGeneralLog err=%v", err.Error())
 		return
 	} else {
@@ -193,7 +207,7 @@ func CreateHub(doInWsMess DoInWsMess, //1 may be nill
 			fmt.Printf("--S--  WITH TLS\n")
 			err = server.ListenAndServeTLS(scp.CertFile, scp.KeyFile)
 		}
-		kerr.SysErrPrintf("server.ListenAndServe stopped with message %s", err.Error())
+		//210603 16:56 kerr.SysErrPrintf("server.ListenAndServe stopped with message %s", err.Error())
 		mess := fmt.Sprintf("--S-- server.ListenAndServe stopped with message %s", err.Error())
 		close(ServerStopped) //210323 16:43; for what? Idiot! It is public!
 		serverStopped <- mess

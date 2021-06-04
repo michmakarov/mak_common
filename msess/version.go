@@ -13,6 +13,7 @@ import (
 //versinList defines VersionDescr for each version that has been occured
 //Current version has index 0, previous one - index 1, and so on.
 var versionList = mversion.VersionList{
+	{"mak_common.msess", "nv no env", blabla_210604},
 	{"mak_common.msess", "nv no env", blabla_210311},
 }
 
@@ -25,6 +26,19 @@ func GetCurrVer() string {
 }
 
 //Sequence next constants define textual descriptions of versions.
+
+const blabla_210604 = `
+Plan:
+1.Now a request of "/" cause "feeler panic err = runtime error: invalid memory address or nil pointer dereference". Why?
+<br>---
+<br>
+<br>
+Developer_notes:<br>
+210604 18:03 About "Plan:1". If you have some awkwardness in implementation of your conception it further obligatory will emerge as rough error
+<br>---
+Результаты:<br>---
+Предложение к следующей версии:<br>---
+`
 
 const blabla_210311 = `
 Plan:<br>---
@@ -63,5 +77,7 @@ Or, maybe, the openVPN does not give calm and peace but itch. So I will plunge t
 210419 I am here again. <br>
 <br>---
 Результаты:<br>---
+210604 03:54 Resalts! About what you are? Now the affairs are too mean, broad, and complicated to talk about such high matter!<br>
 Предложение к следующей версии:<br>---
+To tune program for accomplishing elementary right behaviour
 `

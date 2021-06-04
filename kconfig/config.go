@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 
+	"mak_common/kerr"
 	"mak_common/klog"
 	"os"
 	"strconv"
@@ -52,22 +53,29 @@ type Configuration map[string]interface{}
 type CheckConfiguration func(map[string]interface{}) error
 
 //it supposes existing config file in working directory
+//
+//210603 15:02 revision
+// It panics if the config file (see var configFileName) is not exist in working directiry of the process
+//See also func SetConfigFileName
 func ReadConfig(cf CheckConfiguration) (c Configuration, err error) {
+	kerr.PrintDebugMsg(false, "DFLAG210602-0650", fmt.Sprintf("kcofig.ReadConfig here! configFileName=%v", configFileName))
 	c = make(map[string]interface{})
 	var decoded interface{}
 	var d map[string]interface{}
 	var ok bool
 
-	if _, err = os.Stat(configFileName); os.IsNotExist(err) {
-		err = nil
-		c = nil
-		return
+	if _, err = os.Stat(configFileName); os.IsNotExist(err) { //210603 15:02 It is enough case for panic!
+		//err = nil
+		//c = nil
+		//return
+		panic(fmt.Sprintf("kcofig.ReadConfig! There is not configFile=%v in working directory of the proces", configFileName))
 	}
 
 	f, err := os.Open(configFileName)
 
-	if err != nil {
+	if err != nil { //210603 15:02 revision
 		c = nil
+		err = fmt.Errorf("kcofig.ReadConfig! Opening configFile=%v err=%v", configFileName, err.Error())
 		return
 	} else {
 		defer f.Close()
@@ -76,6 +84,7 @@ func ReadConfig(cf CheckConfiguration) (c Configuration, err error) {
 	decoder := json.NewDecoder(f)
 
 	if err = decoder.Decode(&decoded); err != nil {
+		err = fmt.Errorf("kcofig.ReadConfig! Decoding configFile=%v err=%v", configFileName, err.Error())
 		c = nil
 		return
 	}
@@ -84,8 +93,6 @@ func ReadConfig(cf CheckConfiguration) (c Configuration, err error) {
 		err = errors.New("In config.json must be a valid json object")
 		return
 	}
-
-	//fmt.Printf("--M-- d=%v\n", d)
 
 	for k, v := range d {
 		if k != "//" {
@@ -243,5 +250,13 @@ func SetConfigFileName(cfn string) (err error) { //190612
 		return
 	}
 	configFileName = cfn
+	return
+}
+
+//210505 14:42 For http_srv_210505
+func (c Configuration) String(lb string) (res string) {
+	for k, v := range c {
+		res = res + fmt.Sprintf("%v=%v\n", k, v) + lb
+	}
 	return
 }

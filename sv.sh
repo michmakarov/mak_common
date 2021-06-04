@@ -1,5 +1,4 @@
 #!/bin/bash
-echo it is sv.sh: that is setting version of makcommon library
 
 #201228 12:37
 #The idea: 
@@ -11,6 +10,14 @@ echo it is sv.sh: that is setting version of makcommon library
 
 #201230 08:12 In pursuing the xhrboo second parameter was allowed - toGit
 # if it passed changes will be writen to the git
+
+#+++++++++++++++++++++++++++++++++++++++++
+#210423 05:41
+#It is for saving to the git (with pushing to github) the library mak_kommon
+#Also it is tagging with version the version.go files of the libraty components and non golang files as .html, .js and so on
+#It assumes that it is secondary script, that should be invoked by some main script building a golang project.
+#For details see comments into mak_common/mversion/ecxec.go
+#From the main script this expects the version as first parameter and the demand to git the library as second parameter
 
 goOutOnError(){
 	local lastRetCode=$?
@@ -26,6 +33,8 @@ goOutOnError(){
 	} else { echo "--- $operName perfomed"; }
 	fi
 }
+
+echo it is sv.sh: that is git committing and pushing mak_common library
 
 
 areChanges=$(git status -s)

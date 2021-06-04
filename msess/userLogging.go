@@ -32,9 +32,14 @@ var usersLog *os.File
 func createUsersLog() (err error) {
 	var usersLogFileName = "Ulog" + time.Now().Format("20060102_150405") + ".log"
 
-	if usersLog, err = os.Create("logs/" + usersLogFileName); err != nil {
-		err = fmt.Errorf("createUsersLog err=%v", err.Error())
+	if !stringSet(sessCP.Loggers, "u") { //210603 17:12
 		return
+	}
+
+	if usersLog, err = os.Create("logs/u" + usersLogFileName); err != nil { //210603 17:12 Why err? A panic seems more suitable
+		//err = fmt.Errorf("createUsersLog err=%v", err.Error())
+		//return
+		panic(fmt.Sprintf("msess.createUsersLog err=%v", err.Error()))
 	}
 	//kerr.PrintDebugMsg(false, "DFLAG201204_0638", fmt.Sprintf("createUsersLog: success"))
 	return

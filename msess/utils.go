@@ -1,67 +1,22 @@
 // utils
+//210604 17:36 Here are utility that do not have special demands for their using
+//That is them go not have any side effects and supposing about environment of using
+//Of course, each of them was created for special case but may be using anywhere
 package msess
 
 import (
 	"fmt"
-	"mak_common/kerr"
-
-	//"os"
-	//"strings"
-	"time"
+	"os"
+	"strings"
 )
 
-//checkUserCredentailsEnv and other functions with suffix "Env" are
-//envelopes for a programer's callback functions
-//func checkUserCredentailsEnv(userLogName, userPassword string) (user_id int, account, errMess string) {
-func checkUserCredentailsEnv(userLogName, userPassword string) (account, errMess string) {
-	type Result struct {
-		user_id int
-		account string
-		errMess string
-	}
-	var res Result
-	var resChan = make(chan Result)
-	var exec = func() {
-		var user_id int
-		var errMess string
-
-		defer func() {
-			var rec interface{}
-			if rec = recover(); rec != nil {
-				errMess = kerr.GetRecoverErrorText(rec)
-			}
-			resChan <- Result{user_id, account, errMess}
-		}()
-
-		//kerr.PrintDebugMsg(false, "DFLAG201224_07:09", fmt.Sprintf("checkUserCredentailsEnv: before calling"))
-		//user_id, account, errMess = checkUserCredential(userLogName, userPassword)
-		account, errMess = checkUserCredential(userLogName, userPassword)
-
-		//resChan <- Result{user_id, account, errMess}
-	}
-
-	go exec()
-
-	select {
-	case res = <-resChan:
-		//user_id = res.user_id
-		account = res.account
-		errMess = res.errMess
-		//kerr.PrintDebugMsg(false, "DFLAG201224_07:09", fmt.Sprintf("checkUserCredentailsEnv: case res (%v--%v)", user_id, errMess))
-		return
-	case <-time.After(time.Duration(sessCP.CallBakTimeout) * time.Millisecond):
-		errMess = fmt.Sprintf("checkUserCredentails was interrupted by timeout (CallBakTimeout=%v)", sessCP.CallBakTimeout)
-		return
-	}
-}
-
 //210101 for func (fl *feelerLogger) getFlrlogMess
-func byteSet(value byte, byteNum int) bool {
+func byteSet(value byte, bitNum int) bool {
 	var mask byte
-	if byteNum < 1 || byteNum > 7 {
-		panic(fmt.Sprintf("byteSet: illegal byte number=%v", byteNum))
+	if bitNum < 1 || bitNum > 7 {
+		panic(fmt.Sprintf("byteSet: illegal bit number=%v", bitNum))
 	}
-	switch byteNum {
+	switch bitNum {
 	case 1:
 		mask = 0b00000001
 	case 2:
@@ -80,4 +35,50 @@ func byteSet(value byte, byteNum int) bool {
 		mask = 0b10000000
 	}
 	return (value & mask) != 0
+}
+
+//210603 07:41 This is an analog of the func byteSet
+//That is it answers whether is in the value a one-length substring char
+//The length of the value must not be more than 8 , and the length of the char must be equal 1. If not the case the function panics.
+func stringSet(value string, char string) bool {
+	if len(value) > 8 {
+		panic("msess.stringSet: too long value (>8)")
+	}
+	if len(char) != 1 {
+		panic("msess.stringSet: bad char parameter (len != 1")
+	}
+	if strings.Index(value, char) != -1 {
+		return true
+	} else {
+		return false
+	}
+}
+
+//210603 09:09
+func checkLogDirs() error {
+	var err error
+	if sessCP.Loggers == "" {
+		return nil
+	}
+	if stringSet(sessCP.Loggers, "h") {
+		if _, err = os.Stat("logs/h"); err != nil {
+			return fmt.Errorf("Absence of logs/h directory")
+		}
+	} //h
+	if stringSet(sessCP.Loggers, "f") {
+		if _, err = os.Stat("logs/f"); err != nil {
+			return fmt.Errorf("Absence of logs/f directory")
+		}
+	} //f
+	if stringSet(sessCP.Loggers, "u") {
+		if _, err = os.Stat("logs/u"); err != nil {
+			return fmt.Errorf("Absence of logs/u directory")
+		}
+	} //u
+	if stringSet(sessCP.Loggers, "g") {
+		if _, err = os.Stat("logs/g"); err != nil {
+			return fmt.Errorf("Absence of logs/g directory")
+		}
+	} //g
+	return nil
 }

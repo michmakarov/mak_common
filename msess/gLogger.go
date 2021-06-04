@@ -33,10 +33,14 @@ func createGeneralLog() (err error) {
 
 	//kerr.PrintDebugMsg(false, "restoreSess", fmt.Sprintf(" createGeneralLog: fileName=%v", fileName))
 
+	if stringSet(sessCP.Loggers, "g") != true {
+		return
+	}
+
 	generalLogFileName = "GLog" + time.Now().Format("20060102_150405") + ".log"
 
 	gLog = &generalLogger{}
-	if f, err = os.Create("logs/" + generalLogFileName); err != nil {
+	if f, err = os.Create("logs/g" + generalLogFileName); err != nil {
 		gLog = nil
 		return
 	} else {

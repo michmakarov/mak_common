@@ -101,10 +101,16 @@ func createFeeler(h http.Handler) (f *feeler, err error) {
 	if f.flgr, err = createFlrLog(flrLogFileName, uint8(sessCP.Debug)); err != nil {
 		return nil, err
 	} else {
-		go f.flgr.Run()
+		if f.flgr != nil { //210603 06:58 It may be nil if stringSet(sessCP.Loggers, f)!=true
+			go f.flgr.Run()
+		}
 	}
 
-	SendToGenLog("Feeler", " started")
+	if f.flgr != nil {
+		SendToGenLog("Feeler", " started with logging")
+	} else {
+		SendToGenLog("Feeler", " started without logging")
+	}
 	return f, nil
 }
 
@@ -124,7 +130,7 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		var rec interface{}
 		if rec = recover(); rec != nil {
 			kerr.SysErrPrintf("feeler ServeHTTP coughts panic = %v", rec)
-			if sessCP.Debug != 0 {
+			if byteSet(sessCP.Debug, 4) {
 				debug.PrintStack()
 			}
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -134,6 +140,9 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	var WriteToLog = func(do string) { //210325 04:32 //210309 16:46
+		if f.flgr == nil {
+			return
+		} //210603 06:46 See LOGGING definition and func createFlrLog
 		var reqestDescr string = getRequestDescr(r)
 		rr := requestRecord{
 			count:       requestCouter,
@@ -146,18 +155,19 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f.flgr.send <- rr
 	}
 
+	kerr.PrintDebugMsg(true, "DFLAG210604-0308", fmt.Sprintf("feeler.ServeHTTP start RequestURI=%v", r.RequestURI))
 	requestCouter = atomic.AddInt64(&f.feelerCount, 1)
 
 	//r.Method = strings.ToUpper(r.Method)
 
 	//1. Outsession requests pass without any hinder
-	if checkURLPath(r.URL.Path) {
-		goto gettingResponse
+	if checkURLPathEnv(r.URL.Path) {
+		//kerr.PrintDebugMsg(true, "DFLAG210604-0308", fmt.Sprintf("feeler.ServeHTTP after checking RequestURI=%v", r.RequestURI))
+		goto gettingResponse //210604 18:21 Now agent==nil
 	}
 
 	//2. to check agent coockie and getting the current agent
 	if cD, err = getCookieData(r); err != nil {
-		//if agent, err = agentRegistered(cD, r); err != nil { //no agent (or it was forgeded)
 		if r.URL.Path == "/" { //the http client will be given a new agent
 			WriteToLog("accepted")
 			indexHandler(w, r)
@@ -196,11 +206,16 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 gettingResponse:
 	r = r.WithContext(context.WithValue(r.Context(), NumberCtxKey, strconv.FormatInt(requestCouter, 10)))
-	r = r.WithContext(context.WithValue(r.Context(), UserIdCtxKey, agent.UserId))
+	if agent == nil {
+		r = r.WithContext(context.WithValue(r.Context(), UserIdCtxKey, "-1"))
+	} else {
+		r = r.WithContext(context.WithValue(r.Context(), UserIdCtxKey, agent.UserId))
+	}
 	r = r.WithContext(context.WithValue(r.Context(), URLCtxKey, r.RequestURI)) //190408
 	ctx, cancel = context.WithCancel(r.Context())
 	r = r.WithContext(ctx)
 	WriteToLog("accepted")
+	kerr.PrintDebugMsg(true, "DFLAG210604-0308", fmt.Sprintf("feeler.ServeHTTP next calcHTTPResponse; agent=%v", agent))
 	calcHTTPResponse(f.feelerCount, agent, w, r, cancel)
 	return
 
@@ -223,9 +238,11 @@ type feelerLogger struct {
 func createFlrLog(fileName string, mode uint8) (FlrLog *feelerLogger, err error) {
 	var f *os.File
 	//kerr.PrintDebugMsg(false, "DFLAG210102", fmt.Sprintf("createFlrLog: mode: %b", mode))
-
+	if stringSet(sessCP.Loggers, "f") != true {
+		return
+	}
 	FlrLog = &feelerLogger{}
-	if f, err = os.Create("logs/" + fileName); err != nil {
+	if f, err = os.Create("logs/f" + fileName); err != nil {
 		kerr.SysErrPrintf("Не удалось создать lrLog - %v\n ", err.Error())
 		if mode > 0 {
 			fmt.Printf("Не удалось создать lrLog - %v\n ", err.Error())

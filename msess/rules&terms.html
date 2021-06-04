@@ -1,190 +1,273 @@
-
-<!DOCTYPE html>
-
-
-<html lang="en">
-    <head>
-        <title>RELS</title>
-        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-        <script>
-			var pref="PRE_";
-			function hide_show(el){
-				if (!el) {
-					alert("hide_show: it is not el param.")
-					return
+	
+	<!DOCTYPE html>
+	
+	
+	<html lang="en">
+	    <head>
+	        <title>RELS</title>
+	        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	        <script>
+				var pref="PRE_";
+				function hide_show(el){
+					if (!el) {
+						alert("hide_show: it is not el param.")
+						return
+					}
+					var id = el.id
+					if (!id) {
+						alert("hide_show:The element has not id!")
+						return
+					}
+					if (id.substring(0, pref.length)==pref){
+						var pre_el_id=id
+						var base_el_id = id.substring(pref.length)
+					} else{
+						var base_el_id=id
+						var pre_el_id = pref+id
+					}
+					var pre_el = document.getElementById(pre_el_id);
+					if (!pre_el) {
+						alert("hide_show: no pre element="+ pre_el_id)
+						return
+					}
+					var base_el = document.getElementById(base_el_id);
+					if (!base_el) {
+						alert("hide_show: no base element="+ base_el_id)
+						return
+					}
+					if (base_el.style.display === "none") {
+						base_el.style.display = "block";
+						pre_el.style.display = "none";
+					} else {
+						base_el.style.display = "none";
+						pre_el.style.display = "block";
+					}				
+					//alert("base_el_id="+base_el_id+"\npre_el_id="+pre_el_id)
+					//el.style.backgroundColor = '#A5D9F3';
 				}
-				var id = el.id
-				if (!id) {
-					alert("hide_show:The element has not id!")
-					return
-				}
-				if (id.substring(0, pref.length)==pref){
-					var pre_el_id=id
-					var base_el_id = id.substring(pref.length)
-				} else{
-					var base_el_id=id
-					var pre_el_id = pref+id
-				}
-				var pre_el = document.getElementById(pre_el_id);
-				if (!pre_el) {
-					alert("hide_show: no pre element="+ pre_el_id)
-					return
-				}
-				var base_el = document.getElementById(base_el_id);
-				if (!base_el) {
-					alert("hide_show: no base element="+ base_el_id)
-					return
-				}
-				if (base_el.style.display === "none") {
-					base_el.style.display = "block";
-					pre_el.style.display = "none";
-				} else {
-					base_el.style.display = "none";
-					pre_el.style.display = "block";
-				}				
-				//alert("base_el_id="+base_el_id+"\npre_el_id="+pre_el_id)
-				//el.style.backgroundColor = '#A5D9F3';
+			function Previous_hiding(){
+				document.getElementById("INTRODUCTION").style.display = "none";
+				document.getElementById("ALPHABET_LIST").style.display = "none";
 			}
-		</script>
-	</head>
-<body> 
-<p>Version=---201216_rels:51d5bee--*main--210222_2108---
-</p>
-<!-- BEGIN -->
-<div id="PRE_INTRODUCTION" onclick="hide_show(this);">  Show INTRODUCTION</div>
-<div id="INTRODUCTION" onclick="hide_show(this);">
-<h3> INTRODUCTION </h3>
-<p>
-The package MSESS implements http server for single page application.
-That is the package assumes that an <a href="#USER">USER</a> (an end user of the <a href="#SYSTEM">SYSTEM</a>) by mean of some program invoked
-the index page (with the path "/") only and only once for duration their interaction with the <a href="#SYSTEM">SYSTEM</a>). 
-</p>
-<p>
-The central notion here is an <a href="#AGENT">AGENT</a>, that is set of functionality which are provided with the index page
-and through wich a <a href="#USER">USER</a> performs all business tasks for that the <a href="#SYSTEM">SYSTEM</a> is intended.
-</p>
-<p>
-It is important to see that <a href="#AGENT">AGENT</a> is not a program (for example, a browser) on some host
-that the some person starts with perpose to do some business tasks. Through the program he runs the functionality
-which is called agent.
-</p>
-<p>
-An <a href="#AGENT">AGENT</a> is a part of the -SYSTEM-. As such it cannot be arbitrary dispite theoretical ability to perform
-some or all business tasks. That is the -AGENT- has been developed as a special part of the <a href="#SYSTEM">SYSTEM</a>
-and <a href="#SERVER">Server</a> as the main part of the <a href="#SYSTEM">SYSTEM</a>
-can check and checks that requests are come from a legal <a href="#AGENT">AGENT</a>.
-</p>
-<p>
-Each <a href="#AGENT">AGENT</a> has a web socket connnection with <a href="#SERVER">Server</a>. Through it they exchange with
-json messages of format <a href="#WSMESS">WSMESS</a>
-</p>
-<p>
-This file determines terms (with their definitions) that describ features of the msess packet.
-This assumes terms of "http server", "http client" in their common mean.
-</p>
-</div> <!-- INTRODUCTION -->
-
-
-<div id="DEFINITIONS">
-	<h3> DEFINITIONS </h3>
-	<p id="USER">--USER<br>
-		An USER is some person
-    that have authority to perform some set of their business tasks into <a href="#SYSTEM">SYSTEM</a>.
-    An USER interacts with SYSTEM through an <a href="#AGENT">AGENTs</a> and through only the AGENT.
-    The first task that USER can perform into SYSTEM is proving his authority, that is login.
-    His last task is announcement of end of his work, that is logout.<br>
-    This last task causes destroying of the AGENT. That is an AGENT can serve only one USER.<b>
-    Into the <a href="#SYSTEM">SYSTEM</a>, a USER is identified by not negative integer, for example 0, 1, 2 ...  
+			
+			</script>
+		</head>
+	<body onload="Previous_hiding()"> 
+	<p>Version=---201216_rels:51d5bee--*main--210222_2108---
 	</p>
-	<p id="SYSTEM">--SYSTEM<br>
-		The SYSTEM is program device through which a <a href="#USER">USERs</a> cam perform some set of their business tasks. 
-		The SYSTEM is unity of a http server (see <a href="#SERVER">SERVER</a>) and its special http clients called <a href="AGENT">AGENTs</a>.
+	<!-- BEGIN -->
+	<div id="PRE_INTRODUCTION" onclick="hide_show(this);">  Show INTRODUCTION</div>
+	<div id="INTRODUCTION" onclick="hide_show(this);">
+	<h3> INTRODUCTION </h3>
+	<p>
+	The package MSESS implements http server for single page application.
+	That is the package assumes that an <a href="#USER">USER</a> (an end user of the <a href="#SYSTEM">SYSTEM</a>) by mean of some program invoked
+	the index page (with the path "/") only and only once for duration their interaction with the <a href="#SYSTEM">SYSTEM</a>). 
 	</p>
-	<p id="SERVER">--SERVER<br>
-		The SERVER is http server that was developed as the part of the <a href="#SYSTEM">SYSTEM</a>). It is the central part of the SYSTEM,
-		that means that the SERVER is only unique part of the SYSTEM and can spawn another parts of the SYSTEM
-    - <a href="#AGENT">AGENTs</a>. The server in common expect with each request a special encoded cookie. 
-    If the cookie is decoded into right data the server takes the request as legal and perfprms it.
-    Overwise the server answers with code 403. But there are requests that have not to deliver such cookie.
-    They are so called out session requests and intercept requests. One of the last, with (relative) URL "/"
-    is named <a href="#INDEX_REQUEST">INDEX REQUEST</a>. This request produces new agent
-	</p> <!-- SERVER -->
+	<p>
+	The central notion here is an <a href="#AGENT">AGENT</a>, that is set of functionality which are provided with the index page
+	and through wich a <a href="#USER">USER</a> performs all business tasks for that the <a href="#SYSTEM">SYSTEM</a> is intended.
+	</p>
+	<p>
+	It is important to see that <a href="#AGENT">AGENT</a> is not a program (for example, a browser) on some host
+	that the some person starts with perpose to do some business tasks. Through the program he runs the functionality
+	which is called agent.
+	</p>
+	<p>
+	An <a href="#AGENT">AGENT</a> is a part of the <a href="#SYSTEM">SYSTEM</a>. As such it cannot be arbitrary dispite theoretical ability to perform
+	some or all business tasks. That is the <a href="#AGENT">AGENT</a> has been developed as a special part of the <a href="#SYSTEM">SYSTEM</a>
+	and <a href="#SERVER">Server</a> as the main part of the <a href="#SYSTEM">SYSTEM</a>
+	can check and checks that requests are come from a legal <a href="#AGENT">AGENT</a>.
+	</p>
+	<p>
+	Each <a href="#AGENT">AGENT</a> has a web socket connnection with <a href="#SERVER">Server</a>. Through it they exchange with
+	json messages of format <a href="#WSMESS">WSMESS</a>
+	</p>
+	<p>
+	This file determines terms (with their definitions) that describ features of the msess packet.
+	This assumes terms of "http server", "http client" in their common mean.
+	</p>
+	</div> <!-- INTRODUCTION -->
 	
-	<p id="AGENT">--AGENT<br>
-		An AGENT is a set of functionality and visial elements that realizes a special http client through which an user asks the SYSTEM
-    to fulfil some task. That is an AGENT is a unity of a finite user interface and functions through which he can
-    asks the system to do some action. In general, a finite user interacts with any system through some interface and functions,
-    which this interface admitted to launch. An AGENT, in distinguish of that general case, must to give the server testimony
-    that it was developed intentionally as a part of the system.<br>
-    The server keeps the registry of agents in which an agent is represent by a record of next structure.<br>
-    <pre>
-    type Agent struct {
-	RegTime time.Time //The moment of registration;
-
-	RemoteAddress string //A remote address of a http client.
-	UserAgent     string //A description of the http client.
-  //Names last two fields are as names of correspondent headers of a http request.
-
-	//The next two fields gives content of the agent's coocie
-	Tag    string //a unique tag that identifies the agent
-	UserId string //A <a href="#USER">USER</a> identifier.
-  // "" means that no user currently enters the system
-  //After assigning some value, it cannot be changed.
-
-	conn  *websocket.Conn
-	WsOut chan WsMess
-}
-    </pre>
-    See also <a href="#SYSTEM">SYSTEM</a>, <a href="#SERVER">SERVER</a>), <a href="#INTRODUCTION">INTRODUCTION</a>,
-    and <a href="#INDEX_REQUEST">INDEX REQUEST</a>
-	</p><!-- AGENT -->
+	<div id="PRE_ALPHABET_LIST" onclick="hide_show(this);">  Show ALPHABET LIST of DEFINITIONS</div>
+	<div id="ALPHABET_LIST" onclick="hide_show(this);">
+	<h3> ALPHABET LIST of DEFINITIONS</h3>
+	<ol>
+	<li><a href="#AGENT">AGENT</a></li>
+	<li><a href="#API">API</a></li>
+	<li><a href="#INDEX_REQUEST">INDEX_REQUEST</a></li>
+	<li><a href="#INTECEPT_REQUESTS">INTECEPT_REQUESTS</a></li>
+	<li><a href="#LOGGING">LOGGING</a></li> <!-- 210602 -->
+	<li><a href="#OUTSESSION_REQEST">OUTSESSION_REQEST</a></li> <!-- 210602 -->
+	<li><a href="#PROGRAMMER">PROGRAMMER</a></li> <!-- 210602 -->
+	<li><a href="#SERVER">SERVER</a></li>
+	<li><a href="#SESSCONFIGPARAMS">SESSCONFIGPARAMS</a></li> <!-- 210602 -->
+	<li><a href="#SYSTEM">SYSTEM</a></li>
+	<li><a href="#USER">USER</a></li>
+	<li><a href="#WSMESS">WSMESS</a></li>
+	</ol>
+	</div> <!-- ALPHABET LIST of DEFINITIONS -->
 	
 	
-  <p id="INDEX_REQUEST">--INDEX_REQUEST<br>
-    An INDEX REQUEST is a request with reletive url "/". It is one of <a href="#INTECEPT_REQUESTS">INTECEPT_REQUESTS</a><br>
-    It registers a new <a href="#AGENT">AGENT</a>  without a <a href="#USER">USER</a> <br>
-    It means that for admitting some <a href="#USER">USER</a> to <a href="#SYSTEM">the SYSTEM</a> it is reqiered a successful request of "/login".
-  </p>
-
-  <p id="WSMESS">--WSMESS<br>
-    WSMESS stands for web socket message.
-    It is a map[string]string, with which an <a href="#AGENT">AGENT</a> and the <a href="#SERVER">Server</a>
-    are exchanging information. This map must satisfies next requirements:
-  <ol>
-  <li>Keys are case sensitive.</li>
-  <li>If there is the key "err" and its value is not empty
-    it carries the error message and all other keys (if they are) deliver additional info to the err's value.
-    Such WSMESS is called ERRWSMESS
-    If its value is empty the key is ignored
-  </li>
-  <li>If there is not the key "err" or its value is empty must be keys "action", "From", and "To".</li>
-  <li>The keys "from", and "to" carry addresses of from the message originates and where it destines.
-    "user:iser_id" or "tag:tag_value". The last form means the message from an AGENT when no user is bound to them.<br>
-    Values of these keys may be empty. In such cases the "from" means from the SERVER and the "to" means to all.
-  </li>
-  <li>The key "Action" carry a description of a want of a sender to do some deed by recipient.<br>
-    It is assumed that WSMESS may meet some doer into chain of working that knows what to do with WSMESS with given action.
-    See <a href="#WSCHAIN">WSCHAIN</a>
-  </li>
-  </ol> 
-  </p><!-- WSMESS -->
-
-  <p id="INTECEPT_REQUESTS">--INTECEPT_REQUESTS<br>
-    INTECEPT_REQUESTS are those that are handled by the package itself. 
-    That is the application programmer cannot able  to handle the requests : his codes will never be invoked.<br>
-    Those are :
-    <ol>
-		<li> <a href="#INDEX_REQUEST">INDEX REQUEST</a> </li>
-		<li> <a href="#LOGIN_REQUEST">LOGIN REQUEST</a> </li>
-    </ol>
-    
-  </p>
-
-
-  
-</div> <!-- DEFINITIONS -->
-<!-- END -->
-</body>
-</html>
-
-
+	
+	
+	<div id="DEFINITIONS">
+		<h3> DEFINITIONS </h3>
+		<p id="USER">--USER<br>
+			An USER is some person
+	    that have authority to perform some set of their business tasks into <a href="#SYSTEM">SYSTEM</a>.
+	    An USER interacts with SYSTEM through an <a href="#AGENT">AGENTs</a> and through only the AGENT.
+	    The first task that USER can perform into SYSTEM is proving his authority, that is login.
+	    His last task is announcement of end of his work, that is logout.<br>
+	    This last task causes destroying of the AGENT. That is an AGENT can serve only one USER.<b>
+	    Into the <a href="#SYSTEM">SYSTEM</a>, a USER is identified by not negative integer, for example 0, 1, 2 ...  
+		</p>
+		<p id="SYSTEM">--SYSTEM<br>
+			The SYSTEM is program device through which a <a href="#USER">USERs</a> cam perform some set of their business tasks. 
+			The SYSTEM is unity of a http server (see <a href="#SERVER">SERVER</a>) and its special http clients called <a href="AGENT">AGENTs</a>.
+		</p>
+		<p id="SERVER">--SERVER<br>
+			The SERVER is http server that was developed as the part of the <a href="#SYSTEM">SYSTEM</a>). It is the central part of the SYSTEM,
+			that means that the SERVER is only unique part of the SYSTEM and can spawn another parts of the SYSTEM
+	    - <a href="#AGENT">AGENTs</a>. The server in common expect with each request a special encoded cookie. 
+	    If the cookie is decoded into right data the server takes the request as legal and perfprms it.
+	    Overwise the server answers with code 403. But there are requests that have not to deliver such cookie.
+	    They are so called out session requests and intercept requests. One of the last, with (relative) URL "/"
+	    is named <a href="#INDEX_REQUEST">INDEX REQUEST</a>. This request produces new agent
+		</p> <!-- SERVER -->
+		
+		<p id="AGENT">--AGENT<br>
+			An AGENT is a set of functionality and visial elements that realizes a special http client through which an user asks the SYSTEM
+	    to fulfil some task. That is an AGENT is a unity of a finite user interface and functions through which he can
+	    asks the system to do some action. In general, a finite user interacts with any system through some interface and functions,
+	    which this interface admitted to launch. An AGENT, in distinguish of that general case, must to give the server testimony
+	    that it was developed intentionally as a part of the system.<br>
+	    The server keeps the registry of agents in which an agent is represent by a record of next structure.<br>
+	    <pre>
+	    type Agent struct {
+		RegTime time.Time //The moment of registration;
+	
+		RemoteAddress string //A remote address of a http client.
+		UserAgent     string //A description of the http client.
+	  //Names last two fields are as names of correspondent headers of a http request.
+	
+		//The next two fields gives content of the agent's coocie
+		Tag    string //a unique tag that identifies the agent
+		UserId string //A <a href="#USER">USER</a> identifier.
+	  // "" means that no user currently enters the system
+	  //After assigning some value, it cannot be changed.
+	
+		conn  *websocket.Conn
+		WsOut chan WsMess
+	}
+	    </pre>
+	    See also <a href="#SYSTEM">SYSTEM</a>, <a href="#SERVER">SERVER</a>), <a href="#INTRODUCTION">INTRODUCTION</a>,
+	    and <a href="#INDEX_REQUEST">INDEX REQUEST</a>
+		</p><!-- AGENT -->
+		
+		
+	  <p id="INDEX_REQUEST">--INDEX_REQUEST<br>
+	    An INDEX REQUEST is a request with reletive url "/". It is one of <a href="#INTECEPT_REQUESTS">INTECEPT_REQUESTS</a><br>
+	    It registers a new <a href="#AGENT">AGENT</a>  without a <a href="#USER">USER</a> <br>
+	    It means that for admitting some <a href="#USER">USER</a> to <a href="#SYSTEM">the SYSTEM</a> it is reqiered a successful request of "/login".
+	  </p><!-- INDEX_REQUEST -->
+	
+	  <p id="WSMESS">--WSMESS<br>
+	    WSMESS stands for web socket message.
+	    It is a map[string]string, with which an <a href="#AGENT">AGENT</a> and the <a href="#SERVER">Server</a>
+	    are exchanging information. This map must satisfies next requirements:
+	  <ol>
+	  <li>Keys are case sensitive.</li>
+	  <li>If there is the key "err" and its value is not empty
+	    it carries the error message and all other keys (if they are) deliver additional info to the err's value.
+	    Such WSMESS is called ERRWSMESS
+	    If its value is empty the key is ignored
+	  </li>
+	  <li>If there is not the key "err" or its value is empty must be keys "action", "From", and "To".</li>
+	  <li>The keys "from", and "to" carry addresses of from the message originates and where it destines.
+	    "user:iser_id" or "tag:tag_value". The last form means the message from an AGENT when no user is bound to them.<br>
+	    Values of these keys may be empty. In such cases the "from" means from the SERVER and the "to" means to all.
+	  </li>
+	  <li>The key "Action" carry a description of a want of a sender to do some deed by recipient.<br>
+	    It is assumed that WSMESS may meet some doer into chain of working that knows what to do with WSMESS with given action.
+	    See <a href="#WSCHAIN">WSCHAIN</a>
+	  </li>
+	  </ol> 
+	  </p><!-- WSMESS -->
+	
+	  <p id="INTECEPT_REQUESTS">--INTECEPT_REQUESTS<br>
+	    INTECEPT_REQUESTS are those that are handled by the package itself. 
+	    That is the application programmer cannot able  to handle the requests : his codes will never be invoked.<br>
+	    Those are :
+	    <ol>
+			<li> <a href="#INDEX_REQUEST">INDEX REQUEST</a> </li>
+			<li> <a href="#LOGIN_REQUEST">LOGIN REQUEST</a> </li>
+	    </ol>
+	    ________________________________________________________________________________________________________________
+	  </p>
+	
+	  <p id="LOGGING">--LOGGING<br> <!-- 210602 -->
+		The package itself may maintain four log files<br>
+		1. httpServerLog or h. This log file shows the golang http.Server errors. See var httpServerLog *log.Logger in msess/httpserver_log.go<br>
+		2. usersLog or u. This log shows requests that were accepted for processing. See var usersLog *os.File in msess/userLogging.go<br>
+		3. frontLog (feelerLog) or f. This log shows requests that were received from golang http.Server for dispatching (or preliminary processing).<br>
+			See type feeler struct; feeler.flgr; feler.ServeHTTP in msess/feeler.go<br>
+		4. generalLog or g. This log shows arbitrary info. This log in distinct of previous three is accessible for using by a <a href="#PROGRAMMER">programmer</a>
+			That is the log is single into that a <a href="#PROGRAMMER">programmer</a> can write his/her messages.<br>
+			See var gLog *generalLogger in msess/gLogger.go and a public func SendToGenLog(tp string, mess string)<br>
+			<br>
+		For storing these logs MUST BE directories LOGS/h, LOGS/u, LOGS/f, and LOGS/g of the project working directory<br>
+		A <a href="#PROGRAMMER">programmer</a> may switch on/off running (and existing) these logs by defining the parameter SessConfigParams.Loggers See <a href="#SESSCONFIGPARAMS">SESSCONFIGPARAMS</a><br>
+		If SessConfigParams.Loggers="" the directory logs may be absent at all.<br>
+		According the parameter and existense of the directories is checked by function CreateHub (see <a href="#API">API</a>) <br>
+		<br>
+		Besides these four logs 
+		______________________________________________________________________________________________________________
+	  </p>
+	
+	  <p id="PROGRAMMER">--PROGRAMMER<br> <!-- 210602 -->
+	    He or she that is developer of some golang project and which is decided to use this package <br>
+	    _____________________________________________________________________________________________________________
+	  </p>
+	
+	  <p id="SESSCONFIGPARAMS">--SESSCONFIGPARAMS<br> <!-- 210602 -->
+	    It is a set of parameters by which a <a href="#PROGRAMMER">programmer</a> can tune behaviour of the package.<br>
+	    See type SessConfigParams struct and var sessCP *SessConfigParams in msess/agents.go<br>
+	    See also the public func CreateHub in msess/hubCallBack.go<br>
+	    ______________________________________________________________________________________________________________
+	  </p>
+	
+	  <p id="API">--API<br> <!-- 210602 -->
+	    It is a set of public functions and other pablic elements (such as variables, types and like) by which a <a href="#PROGRAMMER">programmer</a> may interact with the package.<br>
+	    Here only names these elements with references to code are represented. All essential infos are in code<br>
+	    Those are :
+	    <ol>
+			<li> function CreateHub in msess/hubCallBack.go<br>
+			It is central API item by which a <a href="#PROGRAMMER">programmer</a> may have access to the package's functionality<br>
+			It has five parameters. They are elements of API and have dictinct description in this file. Such as:<br>
+			<a href="#SESSCONFIGPARAMS">SESSCONFIGPARAMS</a><br>
+			...
+			</li>
+			<li> ??????????????????? </li>
+	    </ol>
+	    
+	    ______________________________________________________________________________________________________________
+	  </p>
+	
+	  <p id="OUTSESSION_REQEST">--OUTSESSION_REQEST<br> <!-- 210602 -->
+	    Such requests are peformed without checking that they have been come from some <a href="#USER">USER</a> in frame of working of a registered <a href="#AGENT">AGENT</a><br>
+	    That is an arbitrary http client may send such requests<br>
+	    See also type URLPathChecker func(path string) bool in msess/hubCallBack.go<br>
+	    A <a href="#PROGRAMMER">programmer</a> must give it as second parameter of function CreateHub (see <a href="#API">API</a>)<br>
+	    ______________________________________________________________________________________________________________
+	  </p> <!-- OUTSESSION_REQEST -->
+	
+	
+	  
+	</div> <!-- DEFINITIONS -->
+	<!-- END -->
+	</body>
+	</html>
+	
+	
+	
