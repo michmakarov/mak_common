@@ -67,7 +67,19 @@ func insertUserLogRecord(ulr *userLogRecord) {
 //reqNum, start, user_id, tag, addr, url, dur, code, extraInfo
 
 func newUserLogRecord(reqNum, start, user_id, tag, addr, url, dur, code, extraInfo string) (rec *userLogRecord) {
-	*rec = userLogRecord{
+	//210609 07:43 In ksess there is no such nightmare
+	//*rec = userLogRecord{
+	//	reqNum,
+	//	start,
+	//	user_id,
+	//	tag,
+	//	addr,
+	//	url,
+	//	dur,
+	//	code,
+	//	extraInfo,
+	//}
+	rec = &userLogRecord{
 		reqNum,
 		start,
 		user_id,

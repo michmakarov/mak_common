@@ -13,6 +13,7 @@ import (
 //versinList defines VersionDescr for each version that has been occured
 //Current version has index 0, previous one - index 1, and so on.
 var versionList = mversion.VersionList{
+	{"mak_common.msess", "nv no env", blabla_210609},
 	{"mak_common.msess", "nv no env", blabla_210604},
 	{"mak_common.msess", "nv no env", blabla_210311},
 }
@@ -27,17 +28,42 @@ func GetCurrVer() string {
 
 //Sequence next constants define textual descriptions of versions.
 
+const blabla_210609 = `
+Plan:
+1. to test logging<br>
+2. ind problem<br>
+<br>
+<br>---
+Developer_notes:<br>
+210609 15:07 embed package!<br>
+210610 03:49 Yeasterday an idea hovered over: to have resources.<br>
+Yes, to have learnd the structure of ELF files is very, very good!<br>
+But to have the agent files in work directory of the server is no less good!<br>
+
+<br>
+<br>---
+Результаты:<br>---
+Предложение к следующей версии: <br>
+<br>---
+`
+
 const blabla_210604 = `
 Plan:
 1.Now a request of "/" cause "feeler panic err = runtime error: invalid memory address or nil pointer dereference". Why?
+2.(210607 04:10) To convert the "rules&terms.html" for going to distinct definition files
 <br>---
 <br>
 <br>
 Developer_notes:<br>
-210604 18:03 About "Plan:1". If you have some awkwardness in implementation of your conception it further obligatory will emerge as rough error
+210604 18:03 About "Plan:1". If you have some awkwardness in implementation of your conception it further obligatory will emerge as rough error<br>
+210607 03:22 About "Plan:1". Logic of func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) must be overwrought and described.<br>
 <br>---
 Результаты:<br>---
-Предложение к следующей версии:<br>---
+1. There was so many foolishness and I fear that remains no less ...
+2. It was done in principle
+Предложение к следующей версии: <br>
+"/" wears an agent but where to search files that enbodies an agent? Let it be "ind problem"
+<br>---
 `
 
 const blabla_210311 = `

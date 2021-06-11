@@ -52,7 +52,7 @@ func setCookieData(cookieData SessCookieData, w http.ResponseWriter) (err error)
 }
 
 //It will be call for all requst!!!
-//returns err!=error if decoding the cookie was not succeded or there is not AgentCookieName cookie
+//returns err!=nil if decoding the cookie was not succeded or there is not AgentCookieName cookie
 func getCookieData(r *http.Request) (cookieData *SessCookieData, err error) {
 	var cookie *http.Cookie
 	var cd SessCookieData

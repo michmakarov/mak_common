@@ -53,8 +53,7 @@
 			</script>
 		</head>
 	<body onload="Previous_hiding()"> 
-	<p>Version=---201216_rels:51d5bee--*main--210222_2108---
-	</p>
+	<p>Version=---210607 08:16---</p>
 	<!-- BEGIN -->
 	<div id="PRE_INTRODUCTION" onclick="hide_show(this);">  Show INTRODUCTION</div>
 	<div id="INTRODUCTION" onclick="hide_show(this);">
@@ -93,18 +92,18 @@
 	<div id="ALPHABET_LIST" onclick="hide_show(this);">
 	<h3> ALPHABET LIST of DEFINITIONS</h3>
 	<ol>
-	<li><a href="#AGENT">AGENT</a></li>
-	<li><a href="rules_terms/api.html">API</a></li>
-	<li><a href="rules_terms/feeler.html">FEELER</a></li>
+	<li><a href="agent.html">AGENT</a></li>
+	<li><a href="api.html">API</a></li>
+	<li><a href="feeler.html">FEELER</a></li>
 	<li><a href="#INDEX_REQUEST">INDEX_REQUEST</a></li>
 	<li><a href="#INTECEPT_REQUESTS">INTECEPT_REQUESTS</a></li>
 	<li><a href="#LOGGING">LOGGING</a></li> <!-- 210602 -->
 	<li><a href="#OUTSESSION_REQEST">OUTSESSION_REQEST</a></li> <!-- 210602 -->
-	<li><a href="rules_terms/programmer.html">PROGRAMMER</a></li> <!-- 210602 -->
-	<li><a href="#SERVER">SERVER</a></li>
+	<li><a href="programmer.html">PROGRAMMER</a></li> <!-- 210602 -->
+	<li><a href="server.html">SERVER</a></li>
 	<li><a href="#SESSCONFIGPARAMS">SESSCONFIGPARAMS</a></li> <!-- 210602 -->
-	<li><a href="#SYSTEM">SYSTEM</a></li>
-	<li><a href="#USER">USER</a></li>
+	<li><a href="system.html">SYSTEM</a></li>
+	<li><a href="user.html">USER</a></li>
 	<li><a href="#WSMESS">WSMESS</a></li>
 	</ol>
 	</div> <!-- ALPHABET LIST of DEFINITIONS -->
@@ -114,57 +113,7 @@
 	
 	<div id="DEFINITIONS">
 		<h3> DEFINITIONS </h3>
-		<p id="USER">--USER<br>
-			An USER is some person
-	    that have authority to perform some set of their business tasks into <a href="#SYSTEM">SYSTEM</a>.
-	    An USER interacts with SYSTEM through an <a href="#AGENT">AGENTs</a> and through only the AGENT.
-	    The first task that USER can perform into SYSTEM is proving his authority, that is login.
-	    His last task is announcement of end of his work, that is logout.<br>
-	    This last task causes destroying of the AGENT. That is an AGENT can serve only one USER.<b>
-	    Into the <a href="#SYSTEM">SYSTEM</a>, a USER is identified by not negative integer, for example 0, 1, 2 ...  
-		</p>
-		<p id="SYSTEM">--SYSTEM<br>
-			The SYSTEM is program device through which a <a href="#USER">USERs</a> cam perform some set of their business tasks. 
-			The SYSTEM is unity of a http server (see <a href="#SERVER">SERVER</a>) and its special http clients called <a href="AGENT">AGENTs</a>.
-		</p>
-		<p id="SERVER">--SERVER<br>
-			The SERVER is http server that was developed as the part of the <a href="#SYSTEM">SYSTEM</a>). It is the central part of the SYSTEM,
-			that means that the SERVER is only unique part of the SYSTEM and can spawn another parts of the SYSTEM
-	    - <a href="#AGENT">AGENTs</a>. The server in common expect with each request a special encoded cookie. 
-	    If the cookie is decoded into right data the server takes the request as legal and perfprms it.
-	    Overwise the server answers with code 403. But there are requests that have not to deliver such cookie.
-	    They are so called out session requests and intercept requests. One of the last, with (relative) URL "/"
-	    is named <a href="#INDEX_REQUEST">INDEX REQUEST</a>. This request produces new agent
-		</p> <!-- SERVER -->
 		
-		<p id="AGENT">--AGENT<br>
-			An AGENT is a set of functionality and visial elements that realizes a special http client through which an user asks the SYSTEM
-	    to fulfil some task. That is an AGENT is a unity of a finite user interface and functions through which he can
-	    asks the system to do some action. In general, a finite user interacts with any system through some interface and functions,
-	    which this interface admitted to launch. An AGENT, in distinguish of that general case, must to give the server testimony
-	    that it was developed intentionally as a part of the system.<br>
-	    The server keeps the registry of agents in which an agent is represent by a record of next structure.<br>
-	    <pre>
-	    type Agent struct {
-		RegTime time.Time //The moment of registration;
-	
-		RemoteAddress string //A remote address of a http client.
-		UserAgent     string //A description of the http client.
-	  //Names last two fields are as names of correspondent headers of a http request.
-	
-		//The next two fields gives content of the agent's coocie
-		Tag    string //a unique tag that identifies the agent
-		UserId string //A <a href="#USER">USER</a> identifier.
-	  // "" means that no user currently enters the system
-	  //After assigning some value, it cannot be changed.
-	
-		conn  *websocket.Conn
-		WsOut chan WsMess
-	}
-	    </pre>
-	    See also <a href="#SYSTEM">SYSTEM</a>, <a href="#SERVER">SERVER</a>), <a href="#INTRODUCTION">INTRODUCTION</a>,
-	    and <a href="#INDEX_REQUEST">INDEX REQUEST</a>
-		</p><!-- AGENT -->
 		
 		
 	  <p id="INDEX_REQUEST">--INDEX_REQUEST<br>

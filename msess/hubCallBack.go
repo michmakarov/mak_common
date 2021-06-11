@@ -158,6 +158,10 @@ func CreateHub(doInWsMess DoInWsMess, //1 may be nill
 		return
 	}
 
+	if err = checkAgentFiles(); err != nil {
+		return
+	}
+
 	createHttpserverLog() //210603 09:46
 
 	//201204 07:58

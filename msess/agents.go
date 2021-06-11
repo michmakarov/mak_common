@@ -55,8 +55,6 @@ var mqChan chan MonitorQuery
 
 var server *http.Server
 
-//var calcHTTPResponseMtx sync.Mutex
-
 func (a *Agent) shortDescr(sd string) {
 	var user string
 	if a == nil {
@@ -134,48 +132,42 @@ func regAgent(a *Agent) (err error) {
 	return
 }
 
+//210609 03:04 This in whole is an rough error. It should be simple, without overload of exess functionality.
+//210608 02:48 Unregistering a forgeded agent now seems an rough error.
+//210608 07:05 A forgeded agent is a registered agent that has the same tag as in the request (r) but
+//not the same RemoteAddress or UserAgent
 //210316 16:36
 //It returns err!=nil
 //if no agent registered with agent.Tag=cd.Tag
 //or if there is such agent but the obtained current cookie is forged
 //If err==nil the a is a copy of a registered *Agent
-func agentRegistered(cd *SessCookieData, r *http.Request) (a *Agent, err error) {
-	var mQ MonitorQuery = MonitorQuery{"is_registered", cd, make(chan MonitorResult)}
+//func agentRegistered(cd *SessCookieData, r *http.Request) (a *Agent, err error) { - before 210608 07:05
+//func agentRegistered(r *http.Request) (a *Agent, err error) {
+func agentRegistered(r *http.Request) (a *Agent) {
+	var cd *SessCookieData
+	var mQ MonitorQuery
 	var mR MonitorResult
 	var ok bool
-	var forgedMess string
 
 	if !MsessRuns() {
 		panic("agentRegistered: MSess does not run")
 	}
+
+	if cd, err = getCookieData(r); err != nil {
+		a = nil
+		return
+	}
+	mQ = MonitorQuery{"is_registered", cd, make(chan MonitorResult)}
+
 	mqChan <- mQ
 	mR = <-mQ.ResultChan
-	if mR.Err != nil {
-		err = mR.Err
+	if mR.Data == nil {
+		a = nil
 		return
 	}
 	if a, ok = mR.Data.(*Agent); !ok {
 		panic("agentRegistered: data returned from is_registered is not converted to *Agent")
 	}
-
-	if a.RemoteAddress != r.RemoteAddr {
-		forgedMess = fmt.Sprintf("not equal a.RemoteAddress==%v;r.RemoteAddr==%v", a.RemoteAddress, r.RemoteAddr)
-		goto forgedAgent
-	} else {
-		return
-	}
-	if a.UserAgent != r.UserAgent() {
-		forgedMess = fmt.Sprintf("not equal a.UserAgent==%v;r.UserAgent()==%v", a.UserAgent, r.UserAgent())
-		goto forgedAgent
-	} else {
-		return
-	}
-
-forgedAgent:
-	err = fmt.Errorf("agentRegistered: forgeded agent: %v", forgedMess)
-	unregAgent(a)
-	sendNoteAboutUnregister(a)
-	a = nil
 	return
 }
 
@@ -299,8 +291,13 @@ type SessConfigParams struct {
 	//If it less than 100 it will be set in 100 (the default value)
 	//---------------------
 
-	//--------------------- 210603 06:22
+	//--------------------- 210603 06:22 210610 06:20 if it is empty logging does not do at all
 	Loggers string // See LOGGING definition
+	//---------------------
+
+	//--------------------- 210608 06:22 That is force registration
+	//
+	AgentForceReg bool // if true the indexHandler when has discovered that an agent with given tag is registered unregisters it
 	//---------------------
 
 	HurryForbidden bool
@@ -310,23 +307,31 @@ func sendNoteAboutUnregister(a *Agent) {
 	panic("The sendNoteAboutUnregister has not been realized yet.")
 }
 
-//
+//210607 02:52 May be a==nil
 func calcHTTPResponse(reqNum int64, a *Agent, w http.ResponseWriter, r *http.Request, cancel context.CancelFunc) {
 	var (
 		ulr       *userLogRecord
 		start     string
 		begin     = time.Now()
 		doneChan2 chan *userLogRecord
-		//err          error
+		userId    string
+		aTag      string
 	)
 
 	//kerr.PrintDebugMsg(false, "ServeHTTP_201203_1129", fmt.Sprintf("calcHTTPResponse:very start; c=%v", c))
 
 	start = begin.Format(timeFormat)
+	if a == nil {
+		userId = "-1"
+		aTag = "noAgent"
+	} else {
+		userId = a.UserId
+		aTag = a.Tag
+	}
 
-	//1        					2      3        4    5     6    7    8     9
-	//reqNum, 					start, user_id, tag, addr, url, dur, code, extraInfo
-	ulr = newUserLogRecord(fmt.Sprintf("%v", reqNum), start, a.UserId, a.Tag, r.RemoteAddr, r.RequestURI, "", "", "")
+	//1         				2      3        4    5             6            7      8      9
+	//reqNum, 	    			start, user_id, tag, addr,         url,         dur,   code, extraInfo
+	ulr = newUserLogRecord(fmt.Sprintf("%v", reqNum), start, userId, aTag, r.RemoteAddr, r.RequestURI, "", "", "")
 
 	doneChan2, err = globalNotDone.addHTTPChore(ulr, w, r, cancel)
 

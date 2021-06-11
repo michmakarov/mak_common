@@ -2,10 +2,12 @@
 //210604 17:36 Here are utility that do not have special demands for their using
 //That is them go not have any side effects and supposing about environment of using
 //Of course, each of them was created for special case but may be using anywhere
+//210610 o6:29 Of cause, they may use all (types, vars, funcs ...) from the package
 package msess
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 )
@@ -54,10 +56,11 @@ func stringSet(value string, char string) bool {
 	}
 }
 
-//210603 09:09
+//210603 09:09 210610 06:18
+//
 func checkLogDirs() error {
 	var err error
-	if sessCP.Loggers == "" {
+	if sessCP.Loggers == "" { //SessConfigParams.Loggers
 		return nil
 	}
 	if stringSet(sessCP.Loggers, "h") {
@@ -80,5 +83,25 @@ func checkLogDirs() error {
 			return fmt.Errorf("Absence of logs/g directory")
 		}
 	} //g
+	return nil
+}
+
+//210609 06:46 For func (f *feeler) ServeHTTP (handling panic)
+func getRequestBrief(r *http.Request) string {
+	return fmt.Sprintf("%v from %v", r.RequestURI, r.RemoteAddr)
+}
+
+//210610 06:13 It checks existence in work directory the agent files.
+//Now they are ind.html and agent.js
+func checkAgentFiles() error {
+	var err error
+	if _, err = os.Stat("ind.html"); err != nil {
+		return fmt.Errorf("checkAgentFiles: Absence of ind.html file")
+	}
+
+	if _, err = os.Stat("agent.js"); err != nil {
+		return fmt.Errorf("checkAgentFiles: Absence of agent.js file")
+	}
+
 	return nil
 }

@@ -1,0 +1,19 @@
+	
+<!DOCTYPE html>
+	
+	
+<div id="FEELER">--FEELER<br>
+ <p>Version=---210607 03:34--</p>
+ <p> The package, if it is using (see <a href="api.html">API</a>, func CreateHub), 
+ creates http.Server and gives it the structure feeler (see type feeler struct in feeler.go).
+ The structure has  func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) which receives all requests
+ for preliminary working.
+ A result of this working may be (case 1) generating the package's own response or (case 2) transmitting the request to <a href="programmer.html">PROGRAMMER</a>'s handler.
+ That is through func CreateHub (its third parameter) a <a href="programmer.html">PROGRAMMER</a> must give a handler to which will be transmitting requests the responses to which
+ have not been generated. Next the algorithm of sorting out the cases are describing.<br> 
+ To obtain the precise algorithm see func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) in feeler.go file<br>
+</p>
+</div>
+	
+	
+	

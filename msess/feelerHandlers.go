@@ -15,13 +15,13 @@ func FeelerHandlers() {
 	fmt.Println("feelerHandlers: Hello World!")
 }
 
-//This func invokes by func (f *feeler) ServeHTTP if call of getCookieData gives error
-//and the request is index request
+//210609 03:33 See sessCP.AgentForceReg and func CreateHub (fifth parameter)
+//210607 16:12 This hunc generates answers of (have intercepted) requests with the Path="/"
 //210419 10:40 it registers a new agent!
-//
 //That is it is helper function that may be called only in above pointed place.
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
+	var currAgent *Agent
 	var newAgent *Agent
 	var indF *os.File
 	var cookieData SessCookieData
@@ -37,6 +37,18 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			kerr.SysErrPrintf("msess.indHandler panics: = %v", panicMessage)
 		}
 	}()
+
+	if currAgent = agentRegistered(r); currAgent != nil {
+		if !sessCP.AgentForceReg {
+			errCode = 403
+			panic(fmt.Sprintf("agent already exist:%v", currAgent))
+		} else {
+			if err = unregAgent(currAgent); err != nil {
+				errCode = 400
+				panic(fmt.Sprintf("Error of unregistration existing agent:%v", err.Error()))
+			}
+		}
+	}
 
 	if indF, err = os.Open("ind.html"); err != nil {
 		panic(fmt.Sprintf("ind.html err=%v", err.Error()))
@@ -65,4 +77,9 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	w.Write(b)
 
+}
+
+func agentHandler(w http.ResponseWriter, r *http.Request) {
+	kerr.PrintDebugMsg(false, "DFLAG210610", "Next serving agent.js")
+	http.ServeFile(w, r, "agent.js")
 }

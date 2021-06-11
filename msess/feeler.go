@@ -116,12 +116,12 @@ func createFeeler(h http.Handler) (f *feeler, err error) {
 
 func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var (
-		err           error
-		cD            *SessCookieData
+		//err           error
+		//cD            *SessCookieData
 		clientErrMess string
 		clientErrCode int
 
-		agent         *Agent
+		a             *Agent
 		cancel        context.CancelFunc
 		ctx           context.Context
 		requestCouter int64
@@ -129,17 +129,19 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		var rec interface{}
 		if rec = recover(); rec != nil {
-			kerr.SysErrPrintf("feeler ServeHTTP coughts panic = %v", rec)
+			var msg string
+			msg = fmt.Sprintf("feeler panic %v (%v)", rec, getRequestBrief(r))
+			kerr.SysErrPrintln(msg)
 			if byteSet(sessCP.Debug, 4) {
 				debug.PrintStack()
 			}
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			w.WriteHeader(500)
-			w.Write([]byte(fmt.Sprintf("feeler panic err = %v", rec)))
+			w.Write([]byte(msg))
 		}
 	}()
 
-	var WriteToLog = func(do string) { //210325 04:32 //210309 16:46
+	var WriteToLog = func(do string) { //210325 04:32 //210309 16:46 //210607 18:29
 		if f.flgr == nil {
 			return
 		} //210603 06:46 See LOGGING definition and func createFlrLog
@@ -155,68 +157,68 @@ func (f *feeler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f.flgr.send <- rr
 	}
 
-	kerr.PrintDebugMsg(true, "DFLAG210604-0308", fmt.Sprintf("feeler.ServeHTTP start RequestURI=%v", r.RequestURI))
+	kerr.PrintDebugMsg(true, "DFLAG210610", fmt.Sprintf("feeler.ServeHTTP start RequestURI=%v", r.RequestURI))
 	requestCouter = atomic.AddInt64(&f.feelerCount, 1)
 
+	// 210607 18:36 I think that a handler may do this it it needs
 	//r.Method = strings.ToUpper(r.Method)
 
-	//1. Outsession requests pass without any hinder
-	if checkURLPathEnv(r.URL.Path) {
-		//kerr.PrintDebugMsg(true, "DFLAG210604-0308", fmt.Sprintf("feeler.ServeHTTP after checking RequestURI=%v", r.RequestURI))
-		goto gettingResponse //210604 18:21 Now agent==nil
-	}
-
-	//2. to check agent coockie and getting the current agent
-	if cD, err = getCookieData(r); err != nil {
-		if r.URL.Path == "/" { //the http client will be given a new agent
-			WriteToLog("accepted")
-			indexHandler(w, r)
-			return
-		} else { //no agent: all requests excluding "/" are forbidden
-			clientErrMess = fmt.Sprintf("getCookieData: no agent err=%v\n", err.Error())
-			clientErrCode = 403
-			goto exitOnErr
-		}
-		//}
-
-	} else { //
-		if agent, err = agentRegistered(cD, r); err != nil { //no agent (or it was forged and therefore removed)
-			clientErrMess = fmt.Sprintf("getCookieData:agentRegistered: there is already no such agent or the cookie was forged; err=%v\n", err.Error())
-			clientErrCode = 403
-			goto exitOnErr
-		} //else{//The current was obtained}
-	}
-
-	//3. Now there is a agent and we can wait "/ws", "/login", "logout"
-	//The agent is a copy of the registry record. So it admits any manipulates with it.
+	//1. 210607 15:59 intercepting 210609 06:20
+	//Each case caurses sending some aswer, which is determined entirely by the handler.
+	//The handler has only a request and forms an answer on its own from the request
 	switch r.URL.Path {
+	case "/":
+		WriteToLog("intercepted")
+		indexHandler(w, r)
+		return
+	case "/agent":
+		WriteToLog("intercepted")
+		agentHandler(w, r)
+		return
 	case "/ws":
-		serveWs(w, r, agent)
-		WriteToLog("accepted")
+		serveWs(w, r, a)
+		WriteToLog("intercepted")
 		return
 	case "/login":
-		login(w, r, agent)
-		WriteToLog("accepted")
+		login(w, r, a)
+		WriteToLog("intercepted")
 		return
 	case "/logout":
-		logout(w, r, agent)
-		WriteToLog("accepted")
+		logout(w, r, a)
+		WriteToLog("intercepted")
 		return
+	}
+
+	//2. Outsession requests pass without any hinder
+	if checkURLPathEnv(r.URL.Path) {
+		//kerr.PrintDebugMsg(true, "DFLAG210604-0308", fmt.Sprintf("feeler.ServeHTTP after checking RequestURI=%v", r.RequestURI))
+		goto gettingResponse //210604 18:21 Now agent==nil as the mark of outsession request
+	}
+
+	//3. Determing agent
+	if a = agentRegistered(r); a == nil {
+		clientErrMess = fmt.Sprintf("No agent\n")
+		clientErrCode = 403
+		goto exitOnErr
 	}
 
 gettingResponse:
 	r = r.WithContext(context.WithValue(r.Context(), NumberCtxKey, strconv.FormatInt(requestCouter, 10)))
-	if agent == nil {
+	if a == nil {
 		r = r.WithContext(context.WithValue(r.Context(), UserIdCtxKey, "-1"))
 	} else {
-		r = r.WithContext(context.WithValue(r.Context(), UserIdCtxKey, agent.UserId))
+		r = r.WithContext(context.WithValue(r.Context(), UserIdCtxKey, a.UserId))
 	}
 	r = r.WithContext(context.WithValue(r.Context(), URLCtxKey, r.RequestURI)) //190408
 	ctx, cancel = context.WithCancel(r.Context())
 	r = r.WithContext(ctx)
-	WriteToLog("accepted")
-	kerr.PrintDebugMsg(true, "DFLAG210604-0308", fmt.Sprintf("feeler.ServeHTTP next calcHTTPResponse; agent=%v", agent))
-	calcHTTPResponse(f.feelerCount, agent, w, r, cancel)
+	if a == nil {
+		WriteToLog("OUTSESSION")
+	} else {
+		WriteToLog("REGULAR")
+	}
+	//kerr.PrintDebugMsg(true, "DFLAG210604-0308", fmt.Sprintf("feeler.ServeHTTP next calcHTTPResponse; agent=%v", a))
+	calcHTTPResponse(f.feelerCount, a, w, r, cancel)
 	return
 
 exitOnErr:

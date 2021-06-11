@@ -72,6 +72,10 @@ func checkURLPathEnv(path string) bool {
 
 	}
 
+	if path == "/" {
+		return false
+	} //!!!! false for all INTECEPT_REQUESTS
+
 	go exec()
 
 	select {

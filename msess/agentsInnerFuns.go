@@ -50,6 +50,9 @@ func unregister(data interface{}) (res MonitorResult) {
 	return
 }
 
+//210608 02:48 There is confirmation.
+//It returns a copy or nill if there is not such
+//
 //210323 05:52 The question: if the cd is not beared a valid tag
 //Then it retuns an empty agent! 14:25 -- nil! As it was initially!
 func is_registered(data interface{}) (res MonitorResult) {
@@ -122,7 +125,7 @@ func assign_user(data interface{}) (res MonitorResult) {
 		}
 	}
 	if item == nil {
-		panic("assign_user: no such agent; Tag="+a.Tag)
+		panic("assign_user: no such agent; Tag=" + a.Tag)
 	}
 	return
 }

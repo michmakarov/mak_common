@@ -137,7 +137,7 @@ func logout(w http.ResponseWriter, r *http.Request, a *Agent) {
 	defer func() { //see 201209 06:48 note
 		if rec := recover(); rec != nil {
 			mess := kerr.GetRecoverErrorText(rec)
-			mess = "Exit from session (logout function problem): " + mess
+			mess = "Exit from session (logout function) problem: " + mess
 			kerr.SysErrPrintln(mess)
 
 			w.Header().Add("Content-Type", "text/plain; charset=utf-8")
@@ -145,26 +145,24 @@ func logout(w http.ResponseWriter, r *http.Request, a *Agent) {
 			w.Write([]byte(mess))
 		}
 	}()
+	//kerr.PrintDebugMsg(true, "DFLAG210610", fmt.Sprintf("logout here: agent=%v", a))
 
 	if !MsessRuns() {
 		panic("The msess system is not run")
 	}
 
-	if a.UserId == "" { //the session does not exist
-		sendResult(400, fmt.Sprintf("A user was not assignes to; tag=%v", a.Tag))
+	if a == nil { // An agent has not been registered yet
+		sendResult(500, fmt.Sprint("An agent has not been registered yet"))
 		return
 	}
 
-	switch r.Method {
-	case "GET":
-		//count := GetCountOfPerformingChoresOfUser(strconv.Itoa(cookData.UserID))
-		if err = unregAgent(a); err != nil { //the session does not exist
-			sendResult(400, fmt.Sprintf("error=%v", err.Error()))
-			return
-		}
-	default:
-		mess = fmt.Sprintf("allowed only GET method")
-		sendResult(400, mess)
+	if a.UserId == "" { //
+		sendResult(500, fmt.Sprint("A user has not been assigned to session yet. In other word, there is no user to logout."))
+		return
+	}
+
+	if err = unregAgent(a); err != nil { //the session does not exist
+		sendResult(500, fmt.Sprintf("Logout:Unregistered the agent (%v) error=%v", a, err.Error()))
 		return
 	}
 
