@@ -14,7 +14,7 @@ var sysErrLogFileName string
 var sysErrLogFileNamePrefix string = "KotSysErr"
 
 func init() {
-	if sysErrLog != nil {
+	if sysErrLog != nil {//210621 12:09 It seems as a big nonsense
 		return
 	}
 	//var logFileName string

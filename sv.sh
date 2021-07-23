@@ -34,8 +34,8 @@ goOutOnError(){
 	fi
 }
 
-echo it is sv.sh: that is git committing and pushing mak_common library
-
+echo it is sv.sh: setting the version of owner \(or of employer\ at files of mak_common library\)
+echo revision of 210720 14:10 - 210721 11:53
 
 areChanges=$(git status -s)
 if [ -z "$areChanges"  ]; then {
@@ -49,40 +49,24 @@ version=$1
 toGit=$2
 if [ -z "$version" ]; then {
 echo "There are no version was passed to here"
-echo "v.sh ended its work ------------------------------------------------------"
+echo "sv.sh ended its work ------------------------------------------------------"
 }
 fi
 
 
-#version="+++da21c61--*main--201225_1532+++"
-#fix=+++
-#version=$(echo "$version" | sed -e "s/^$fix//" -e "s/$fix$//")
-echo version=$version
 
 
+#sed -i "s/---.*---/---$version---/" msess/version.go
+#awk -v replacement=$version 'BEGIN {c=0} {if ( c==0 ) if (gsub(/---.*---/, "---"replacement"---")>0) c++; print $0 }' msess/version.go > msess/version.go
+sed -i "1,/---.*---/s/---.*---/---$version---/" msess/version.go
+goOutOnError "sed msess/version.go"
 
 
-
-
-{
-sed -i "s/---.*---/---$version---/" ksess/rules.txt
-goOutOnError "sed ksess/rules.txt"
-
-sed -i "s/---.*---/---$version---/" ksess/api.txt
-goOutOnError "sed ksess/api.txt"
-
-sed -i "s/---.*---/---$version---/" ksess/version.go
-goOutOnError "sed ksess/version.go"
-
-#210105 05:27
-sed -i "s/---.*---/---$version---/" kconfig/config.go
-goOutOnError "sed ksess/version.go"
-}
 
 
 if [ -z "$toGit" ]; then {
 echo "There are no demand to git"
-echo "v.sh ended its work ------------------------------------------------------"
+echo "sv.sh ended its work ------------------------------------------------------"
 exit
 }
 fi

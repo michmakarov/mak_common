@@ -18,8 +18,9 @@
 package mversion
 
 type VersionDescr struct {
+	//IndMark  string //210720 15:22 = "<index>", for example "0"//removed 210721 14:07
 	ProgName string // E.g: "RELS", "mak_common.msess"; it is formed immediately (directly) by an application programmer.
-	Number   string //It is set initially by on application programmer to "nv no env"
+	Number   string //It is set initially by on application programmer to "---nv no env---"
 	// and next may be set by a script to its actual value.
 	Descr string //The text description of the version; it is formed immediately (directly) by an application programmer.
 }

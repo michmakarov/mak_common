@@ -34,7 +34,7 @@ import (
 
 const (
 	ProgName     = "kconfig"
-	Version      = "---201216_rels:51d5bee--*main--210222_2108---" //"190612" //"181003" //"180823"
+	Version      = "---201216_rels:7d9714d--*main--210720_1118---" //"190612" //"181003" //"180823"
 	VersionState = "developing"
 )
 

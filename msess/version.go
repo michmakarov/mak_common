@@ -13,9 +13,9 @@ import (
 //versinList defines VersionDescr for each version that has been occured
 //Current version has index 0, previous one - index 1, and so on.
 var versionList = mversion.VersionList{
-	{"mak_common.msess", "nv no env", blabla_210609},
-	{"mak_common.msess", "nv no env", blabla_210604},
-	{"mak_common.msess", "nv no env", blabla_210311},
+	{"mak_common.msess", "---210224_rels:7d9714d--*main--210723_1012---", blabla_210609},
+	{"mak_common.msess", "---nv no env---", blabla_210604},
+	{"mak_common.msess", "---nv no env---", blabla_210311},
 }
 
 func GetCurrVerInfo() string {
