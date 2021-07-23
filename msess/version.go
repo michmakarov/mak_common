@@ -13,6 +13,7 @@ import (
 //versinList defines VersionDescr for each version that has been occured
 //Current version has index 0, previous one - index 1, and so on.
 var versionList = mversion.VersionList{
+	{"mak_common.msess", "---210224_rels:7d9714d--*main--210723_1330---", blabla_210723},
 	{"mak_common.msess", "---210224_rels:7d9714d--*main--210723_1012---", blabla_210609},
 	{"mak_common.msess", "---nv no env---", blabla_210604},
 	{"mak_common.msess", "---nv no env---", blabla_210311},
@@ -27,6 +28,28 @@ func GetCurrVer() string {
 }
 
 //Sequence next constants define textual descriptions of versions.
+
+const blabla_210723 = `
+Why?<br>
+From the docker here already a week<br>
+See /home/mich412/Desktop/41 -  пароль и другое/history.txt
+It is a urgent want to promote the RELS
+-----------<br>
+Plan:
+1. To do various as soon as they will emerge untill new version<br>
+<br>
+-----------<br>
+Developer_notes:<br>
+210723 12:54 What is it: the ageht_resources.go ?<br>
+<br>
+<br>
+<br>
+-----------<br>
+Результаты:<br>
+-----------<br>
+Предложение к следующей версии: <br>
+-----------<br>
+`
 
 const blabla_210609 = `
 Plan:

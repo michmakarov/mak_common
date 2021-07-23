@@ -17,6 +17,10 @@
 // /home/mich412/go/src/mak_common/sv.sh
 package mversion
 
+import (
+	"fmt"
+)
+
 type VersionDescr struct {
 	//IndMark  string //210720 15:22 = "<index>", for example "0"//removed 210721 14:07
 	ProgName string // E.g: "RELS", "mak_common.msess"; it is formed immediately (directly) by an application programmer.
@@ -28,7 +32,7 @@ type VersionDescr struct {
 type VersionList []VersionDescr
 
 func (vl VersionList) GetCurrVerInfo() string {
-	return vl[0].Descr
+	return fmt.Sprintf("%v:%v", vl[0].ProgName, vl[0].Number)
 }
 
 func (vl VersionList) GetCurrVerNum() string {
